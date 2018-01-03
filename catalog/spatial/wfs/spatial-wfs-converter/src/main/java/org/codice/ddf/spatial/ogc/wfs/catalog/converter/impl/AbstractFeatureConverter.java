@@ -33,7 +33,6 @@ import com.thoughtworks.xstream.io.xml.StaxDriver;
 import com.thoughtworks.xstream.io.xml.WstxDriver;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.io.WKTWriter;
-import com.vividsolutions.jts.io.gml2.GMLReader;
 import ddf.catalog.data.AttributeDescriptor;
 import ddf.catalog.data.AttributeType.AttributeFormat;
 import ddf.catalog.data.Metacard;
@@ -42,7 +41,6 @@ import ddf.catalog.data.impl.BasicTypes;
 import ddf.catalog.data.impl.MetacardImpl;
 import ddf.catalog.data.types.Core;
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.Serializable;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
@@ -54,7 +52,8 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 import javax.xml.bind.DatatypeConverter;
-import javax.xml.parsers.ParserConfigurationException;
+import nl.pdok.gml3.exceptions.GML3ParseException;
+import nl.pdok.gml3.impl.gml3_1_1_2.GML3112ParserImpl;
 import org.apache.commons.lang.StringUtils;
 import org.codice.ddf.libs.geo.GeoFormatException;
 import org.codice.ddf.libs.geo.util.GeospatialUtil;
@@ -64,7 +63,6 @@ import org.codice.ddf.spatial.ogc.wfs.catalog.converter.FeatureConverter;
 import org.codice.ddf.spatial.ogc.wfs.catalog.mapper.MetacardMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xml.sax.SAXException;
 
 public abstract class AbstractFeatureConverter implements FeatureConverter {
 
@@ -277,14 +275,15 @@ public abstract class AbstractFeatureConverter implements FeatureConverter {
       case GEOMETRY:
         XmlNode node = new XmlNode(reader);
         String xml = node.toString();
-        GMLReader gmlReader = new GMLReader();
+        //        GMLReader gmlReader = new GMLReader();
         Geometry geo = null;
         try {
-          geo = gmlReader.read(xml, null);
+          geo = new GML3112ParserImpl().toJTSGeometry(xml);
+          //          geo = gmlReader.read(xml, null);
           if (StringUtils.isNotBlank(srs) && !srs.equals(GeospatialUtil.EPSG_4326)) {
             geo = GeospatialUtil.transformToEPSG4326LonLatFormat(geo, srs);
           }
-        } catch (SAXException | IOException | ParserConfigurationException | GeoFormatException e) {
+        } catch (GeoFormatException | GML3ParseException e) {
           geo = null;
           LOGGER.debug(ERROR_PARSING_MESSAGE, e);
         }
