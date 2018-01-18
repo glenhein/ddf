@@ -13,13 +13,15 @@
  */
 package org.codice.ddf.spatial.ogc.wfs.catalog.mapper;
 
+import java.io.Serializable;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
+
 /** Maps Metacards to WFS Features. */
 public interface MetacardMapper {
-  /** Gets the feature property for the give metacard attribute */
-  String getFeatureProperty(String metacardAttribute);
-
-  /** Gets the metacard attribute for the given feature property */
-  String getMetacardAttribute(String featureProperty);
 
   /** Gets the feature type for this metacard mapper */
   String getFeatureType();
@@ -35,4 +37,16 @@ public interface MetacardMapper {
 
   /** Gets the unit of the feature property mapped the metacard resource-size */
   String getDataUnit();
+
+  Optional<Entry> getEntry(Predicate<Entry> p);
+
+  Stream<Entry> stream();
+
+  interface Entry {
+    String getFeatureProperty();
+
+    String getAttributeName();
+
+    Function<Map<String, Serializable>, String> getMappingFunction();
+  }
 }

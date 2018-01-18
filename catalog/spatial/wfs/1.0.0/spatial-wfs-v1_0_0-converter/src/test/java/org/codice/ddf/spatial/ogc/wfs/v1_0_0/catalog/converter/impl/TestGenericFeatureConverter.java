@@ -18,6 +18,9 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.io.xml.WstxDriver;
@@ -30,8 +33,11 @@ import ddf.catalog.data.types.Core;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
 import javax.xml.bind.DatatypeConverter;
 import javax.xml.namespace.QName;
 import org.apache.ws.commons.schema.XmlSchema;
@@ -46,7 +52,10 @@ import org.codice.ddf.spatial.ogc.wfs.catalog.converter.FeatureConverter;
 import org.codice.ddf.spatial.ogc.wfs.catalog.converter.impl.EnhancedStaxDriver;
 import org.codice.ddf.spatial.ogc.wfs.catalog.converter.impl.GenericFeatureConverter;
 import org.codice.ddf.spatial.ogc.wfs.catalog.converter.impl.GmlGeometryConverter;
+import org.codice.ddf.spatial.ogc.wfs.catalog.mapper.MetacardMapper;
+import org.codice.ddf.spatial.ogc.wfs.catalog.mapper.MetacardMapper.Entry;
 import org.codice.ddf.spatial.ogc.wfs.v1_0_0.catalog.common.Wfs10Constants;
+import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -84,13 +93,47 @@ public class TestGenericFeatureConverter {
 
   private static final String GROUND_GEOM_ELEMENT = "ground_geom";
 
+  private MetacardMapper metacardMapper;
+
+  private List<Entry> mappingEntries;
+
+  @Before
+  public void setup() {
+    String[][] mapping = {{"location", "ground_geom", ""}};
+    this.mappingEntries = new ArrayList<>();
+    this.metacardMapper = mock(MetacardMapper.class);
+
+    Stream.of(mapping).forEach(this::addMockMetacardMapperEntry);
+
+    when(metacardMapper.stream()).thenAnswer((i) -> mappingEntries.stream());
+
+    when(metacardMapper.getEntry(any(Predicate.class)))
+        .thenAnswer(
+            (i) -> {
+              Predicate<Entry> p = (Predicate<Entry>) i.getArguments()[0];
+              return mappingEntries.stream().filter(p).findFirst();
+            });
+  }
+
+  private void addMockMetacardMapperEntry(String[] mapping) {
+    String attributeName = mapping[0];
+    String featureName = mapping[1];
+    String template = mapping[2];
+
+    MetacardMapper.Entry mockEntry = mock(MetacardMapper.Entry.class);
+    when(mockEntry.getAttributeName()).thenAnswer(i -> attributeName);
+    when(mockEntry.getFeatureProperty()).thenAnswer(i -> featureName);
+    when(mockEntry.getMappingFunction()).thenAnswer(i -> template);
+    mappingEntries.add(mockEntry);
+  }
+
   @Test
   @Ignore // DDF-733
   public void testUnmarshalSingleFeatureXmlToObject() {
     XStream xstream = new XStream(new WstxDriver());
 
     MetacardType metacardType = buildMetacardType();
-    GenericFeatureConverter converter = new GenericFeatureConverter();
+    GenericFeatureConverter converter = new GenericFeatureConverter(metacardMapper);
     converter.setMetacardType(buildMetacardType());
 
     converter.setSourceId(SOURCE_ID);
@@ -146,7 +189,7 @@ public class TestGenericFeatureConverter {
     FeatureCollectionConverterWfs10 fcConverter = new FeatureCollectionConverterWfs10();
     Map<String, FeatureConverter> fcMap = new HashMap<>();
 
-    GenericFeatureConverter converter = new GenericFeatureConverter("EPSG:26713");
+    GenericFeatureConverter converter = new GenericFeatureConverter(metacardMapper, "EPSG:26713");
 
     fcMap.put("video_data_set", converter);
     fcConverter.setFeatureConverterMap(fcMap);

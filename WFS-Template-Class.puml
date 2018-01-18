@@ -1,0 +1,33 @@
+@startuml
+package org.codice.ddf.catalog.plugin.metacard.backup.common {
+  class MetacardTemplate {
+    +String applyTemplate(String template);
+  }
+}
+
+package org.codice.ddf.spatial.ogc.wfs.catalog.mapper.impl {
+  +class MetacardMapperImpl {
+  }
+}
+
+package org.codice.ddf.spatial.ogc.wfs.catalog.mapper {
+  +interface MetacardMapper {
+    +String getFeatureProperty(String metacardAttribute);
+    +String getMetacardAttribute(String featureProperty);
+    +String getFeatureType();
+    +String getSortByTemporalFeatureProperty();
+    +String getSortByRelevanceFeatureProperty();
+    +String getSortByDistanceFeatureProperty();
+    +String getDataUnit();
+  }
+}
+
+package org.codice.ddf.spatial.ogc.wfs.v1_0_0.catalog.source {
+  +class WfsSource {
+    +SourceResponse query(QueryRequest request)
+  }
+}
+
+MetacardMapperImpl --|> MetacardMapper
+
+@enduml

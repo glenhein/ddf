@@ -13,10 +13,12 @@
  */
 package org.codice.ddf.spatial.ogc.wfs.catalog.mapper.impl;
 
-import ddf.catalog.data.Metacard;
-import ddf.catalog.data.types.Core;
-import org.apache.commons.collections4.BidiMap;
-import org.apache.commons.collections4.bidimap.DualHashBidiMap;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
 import org.codice.ddf.spatial.ogc.wfs.catalog.mapper.MetacardMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,8 +30,6 @@ public class MetacardMapperImpl implements MetacardMapper {
 
   private String featureType;
 
-  private BidiMap<String, String> bidiMap;
-
   private String dataUnit;
 
   private String sortByTemporalFeatureProperty;
@@ -38,29 +38,15 @@ public class MetacardMapperImpl implements MetacardMapper {
 
   private String sortByDistanceFeatureProperty;
 
+  private List<Entry> mappingEntryList;
+
   public MetacardMapperImpl() {
     LOGGER.debug("Creating {}", MetacardMapperImpl.class.getName());
-    bidiMap = new DualHashBidiMap<String, String>();
+    mappingEntryList = new ArrayList<>();
   }
 
-  @Override
-  public String getFeatureProperty(String metacardAttribute) {
-    String featureProperty = bidiMap.get(metacardAttribute);
-    LOGGER.debug(
-        "Returning feature property {} for metacard attribute {}",
-        featureProperty,
-        metacardAttribute);
-    return featureProperty;
-  }
-
-  @Override
-  public String getMetacardAttribute(String featureProperty) {
-    String metacardAttribute = bidiMap.inverseBidiMap().get(featureProperty);
-    LOGGER.debug(
-        "Returning metacard attribute {} for feature property {}.",
-        metacardAttribute,
-        featureProperty);
-    return metacardAttribute;
+  public Optional<Entry> getEntry(Predicate<Entry> p) {
+    return mappingEntryList.stream().filter(p).findFirst();
   }
 
   public String getFeatureType() {
@@ -102,41 +88,6 @@ public class MetacardMapperImpl implements MetacardMapper {
     this.sortByDistanceFeatureProperty = distanceFeatureProperty;
   }
 
-  public void setTitleMapping(String featureProperty) {
-    LOGGER.debug("Setting title mapping to: {}", featureProperty);
-    bidiMap.put(Core.TITLE, featureProperty);
-  }
-
-  public void setCreatedDateMapping(String featureProperty) {
-    LOGGER.debug("Setting created date mapping to: {}", featureProperty);
-    bidiMap.put(Core.CREATED, featureProperty);
-  }
-
-  public void setModifiedDateMapping(String featureProperty) {
-    LOGGER.debug("Setting modified date mapping to: {}", featureProperty);
-    bidiMap.put(Core.MODIFIED, featureProperty);
-  }
-
-  public void setEffectiveDateMapping(String featureProperty) {
-    LOGGER.debug("Setting effective date mapping to: {}", featureProperty);
-    bidiMap.put(Metacard.EFFECTIVE, featureProperty);
-  }
-
-  public void setExpirationDateMapping(String featureProperty) {
-    LOGGER.debug("Setting expiration date mapping to: {}", featureProperty);
-    bidiMap.put(Core.EXPIRATION, featureProperty);
-  }
-
-  public void setResourceUriMapping(String featureProperty) {
-    LOGGER.debug("Setting resource uri mapping to: {}", featureProperty);
-    bidiMap.put(Core.RESOURCE_URI, featureProperty);
-  }
-
-  public void setResourceSizeMapping(String featureProperty) {
-    LOGGER.debug("Setting resource size mapping to: {}", featureProperty);
-    bidiMap.put(Core.RESOURCE_SIZE, featureProperty);
-  }
-
   @Override
   public String getDataUnit() {
     return dataUnit;
@@ -147,13 +98,17 @@ public class MetacardMapperImpl implements MetacardMapper {
     dataUnit = unit;
   }
 
-  public void setGeographyMapping(String featureProperty) {
-    LOGGER.debug("Setting geography mapping to: {}", featureProperty);
-    bidiMap.put(Core.LOCATION, featureProperty);
+  public void addAttributeMapping(String attributeName, String featureName, String templateText) {
+    LOGGER.debug(
+        "Adding attribute mapping from: {} to: {} using: {}",
+        attributeName,
+        featureName,
+        templateText);
+
+    this.mappingEntryList.add(new FeatureAttributeEntry(attributeName, featureName, templateText));
   }
 
-  public void setThumbnailMapping(String featureProperty) {
-    LOGGER.debug("Setting thumbnail mapping to: {}", featureProperty);
-    bidiMap.put(Core.THUMBNAIL, featureProperty);
+  public Stream<Entry> stream() {
+    return Collections.unmodifiableList(mappingEntryList).stream();
   }
 }

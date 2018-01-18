@@ -25,6 +25,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -48,6 +49,8 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
@@ -85,6 +88,7 @@ import org.codice.ddf.libs.geo.util.GeospatialUtil;
 import org.codice.ddf.spatial.ogc.wfs.catalog.common.FeatureAttributeDescriptor;
 import org.codice.ddf.spatial.ogc.wfs.catalog.common.FeatureMetacardType;
 import org.codice.ddf.spatial.ogc.wfs.catalog.mapper.MetacardMapper;
+import org.codice.ddf.spatial.ogc.wfs.catalog.mapper.MetacardMapper.Entry;
 import org.codice.ddf.spatial.ogc.wfs.v2_0_0.catalog.common.Wfs20Constants;
 import org.codice.ddf.spatial.ogc.wfs.v2_0_0.catalog.common.Wfs20Constants.COMPARISON_OPERATORS;
 import org.codice.ddf.spatial.ogc.wfs.v2_0_0.catalog.common.Wfs20Constants.SPATIAL_OPERATORS;
@@ -95,6 +99,7 @@ import org.joda.time.DateTimeUtils;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.ISODateTimeFormat;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
@@ -143,6 +148,38 @@ public class TestWfsFilterDelegate {
   private MetacardMapper mockMapper;
 
   private FeatureMetacardType mockFeatureMetacardType = mock(FeatureMetacardType.class);
+
+  private List<Entry> mappingEntries;
+
+  @Before
+  public void setup() {
+    String[][] mapping = {{mockMetacardAttribute, mockFeatureProperty, ""}};
+    this.mappingEntries = new ArrayList<>();
+    this.mockMapper = mock(MetacardMapper.class);
+
+    Stream.of(mapping).forEach(this::addMockMetacardMapperEntry);
+
+    when(mockMapper.stream()).thenAnswer((i) -> mappingEntries.stream());
+
+    when(mockMapper.getEntry(any(Predicate.class)))
+        .thenAnswer(
+            (i) -> {
+              Predicate<Entry> p = (Predicate<Entry>) i.getArguments()[0];
+              return mappingEntries.stream().filter(p).findFirst();
+            });
+  }
+
+  private void addMockMetacardMapperEntry(String[] mapping) {
+    String attributeName = mapping[0];
+    String featureName = mapping[1];
+    String template = mapping[2];
+
+    MetacardMapper.Entry mockEntry = mock(MetacardMapper.Entry.class);
+    when(mockEntry.getAttributeName()).thenAnswer(i -> attributeName);
+    when(mockEntry.getFeatureProperty()).thenAnswer(i -> featureName);
+    when(mockEntry.getMappingFunction()).thenAnswer(i -> template);
+    mappingEntries.add(mockEntry);
+  }
 
   @BeforeClass
   public static void setUp() {
@@ -550,8 +587,7 @@ public class TestWfsFilterDelegate {
     when(mockFeatureAttributeDescriptor.getPropertyName()).thenReturn(mockFeatureProperty);
     when(mockFeatureMetacardType.getAttributeDescriptor(mockFeatureProperty))
         .thenReturn(mockFeatureAttributeDescriptor);
-    MetacardMapper mockMapper = mock(MetacardMapper.class);
-    when(mockMapper.getFeatureProperty(mockMetacardAttribute)).thenReturn(mockFeatureProperty);
+
     WfsFilterDelegate delegate =
         new WfsFilterDelegate(
             mockFeatureMetacardType,
@@ -1923,7 +1959,6 @@ public class TestWfsFilterDelegate {
   }
 
   private WfsFilterDelegate setupTemporalFilterDelegate() {
-    MetacardMapper mockMapper = mock(MetacardMapper.class);
     return new WfsFilterDelegate(
         mockFeatureMetacardType,
         MockWfsServer.getFilterCapabilities(),
@@ -1951,9 +1986,6 @@ public class TestWfsFilterDelegate {
     when(mockFeatureAttributeDescriptor.getPropertyName()).thenReturn("EXACT_COLLECT_DATE");
     when(mockFeatureMetacardType.getAttributeDescriptor(mockFeatureProperty))
         .thenReturn(mockFeatureAttributeDescriptor);
-
-    mockMapper = mock(MetacardMapper.class);
-    when(mockMapper.getFeatureProperty(mockMetacardAttribute)).thenReturn(mockFeatureProperty);
   }
 
   private FilterType setupBeforeFilterType() {
@@ -2069,8 +2101,6 @@ public class TestWfsFilterDelegate {
       when(mockFeatureAttributeDescriptor.getPropertyName()).thenReturn(mockFeatureProperty);
       when(mockFeatureMetacardType.getAttributeDescriptor(mockFeatureProperty))
           .thenReturn(mockFeatureAttributeDescriptor);
-      MetacardMapper mockMapper = mock(MetacardMapper.class);
-      when(mockMapper.getFeatureProperty(mockMetacardAttribute)).thenReturn(mockFeatureProperty);
       delegate =
           new WfsFilterDelegate(
               mockFeatureMetacardType,

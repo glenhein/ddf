@@ -62,7 +62,9 @@ public abstract class AbstractFeatureConverterWfs20 extends AbstractFeatureConve
 
   private static final XMLUtils XML_UTILS = XMLUtils.getInstance();
 
-  public AbstractFeatureConverterWfs20() {}
+  public AbstractFeatureConverterWfs20() {
+    super();
+  }
 
   public AbstractFeatureConverterWfs20(MetacardMapper metacardMapper) {
     super(metacardMapper);

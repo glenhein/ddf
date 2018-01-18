@@ -53,6 +53,8 @@ public class GenericFeatureConverter extends AbstractFeatureConverter {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(GenericFeatureConverter.class);
 
+  private String sourceId = null;
+
   public GenericFeatureConverter() {}
 
   public GenericFeatureConverter(String srs) {
@@ -61,6 +63,15 @@ public class GenericFeatureConverter extends AbstractFeatureConverter {
 
   public GenericFeatureConverter(MetacardMapper metacardMapper) {
     super(metacardMapper);
+  }
+
+  public GenericFeatureConverter(MetacardMapper metacardMapper, String srs) {
+    this(metacardMapper);
+    this.setSrs(srs);
+  }
+
+  public GenericFeatureConverter() {
+    super();
   }
 
   /**
