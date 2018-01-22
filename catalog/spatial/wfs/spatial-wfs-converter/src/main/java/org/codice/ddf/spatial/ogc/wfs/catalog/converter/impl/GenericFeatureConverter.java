@@ -55,8 +55,6 @@ public class GenericFeatureConverter extends AbstractFeatureConverter {
 
   private String sourceId = null;
 
-  public GenericFeatureConverter() {}
-
   public GenericFeatureConverter(String srs) {
     this.setSrs(srs);
   }
@@ -68,10 +66,6 @@ public class GenericFeatureConverter extends AbstractFeatureConverter {
   public GenericFeatureConverter(MetacardMapper metacardMapper, String srs) {
     this(metacardMapper);
     this.setSrs(srs);
-  }
-
-  public GenericFeatureConverter() {
-    super();
   }
 
   /**

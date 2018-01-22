@@ -13,6 +13,8 @@
  */
 package org.codice.ddf.spatial.ogc.wfs.v1_0_0.catalog.converter.impl;
 
+import java.io.Serializable;
+import java.util.function.Function;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
@@ -58,6 +60,8 @@ import org.codice.ddf.spatial.ogc.wfs.v1_0_0.catalog.common.Wfs10Constants;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 public class TestGenericFeatureConverter {
 
@@ -123,7 +127,15 @@ public class TestGenericFeatureConverter {
     MetacardMapper.Entry mockEntry = mock(MetacardMapper.Entry.class);
     when(mockEntry.getAttributeName()).thenAnswer(i -> attributeName);
     when(mockEntry.getFeatureProperty()).thenAnswer(i -> featureName);
-    when(mockEntry.getMappingFunction()).thenAnswer(i -> template);
+    when(mockEntry.getMappingFunction())
+        .thenAnswer(
+            new Answer<Function<Map<String, Serializable>, String>>() {
+              @Override
+              public Function<Map<String, Serializable>, String> answer(
+                  InvocationOnMock invocationOnMock) throws Throwable {
+                return stringSerializableMap -> stringSerializableMap.get(featureName).toString();
+              }
+            });
     mappingEntries.add(mockEntry);
   }
 
@@ -245,7 +257,7 @@ public class TestGenericFeatureConverter {
     FeatureCollectionConverterWfs10 fcConverter = new FeatureCollectionConverterWfs10();
     Map<String, FeatureConverter> fcMap = new HashMap<String, FeatureConverter>();
 
-    GenericFeatureConverter converter = new GenericFeatureConverter();
+    GenericFeatureConverter converter = new GenericFeatureConverter(metacardMapper);
 
     fcMap.put("video_data_set", converter);
     fcConverter.setFeatureConverterMap(fcMap);
@@ -268,7 +280,7 @@ public class TestGenericFeatureConverter {
   @Test(expected = IllegalArgumentException.class)
   public void testUnmarshalNoMetacardTypeRegisteredInConverter() throws Throwable {
     XStream xstream = new XStream(new WstxDriver());
-    xstream.registerConverter(new GenericFeatureConverter());
+    xstream.registerConverter(new GenericFeatureConverter(metacardMapper));
     xstream.registerConverter(new GmlGeometryConverter());
     xstream.alias(FEATURE_TYPE, Metacard.class);
     InputStream is = TestGenericFeatureConverter.class.getResourceAsStream("/video_data_set_1.xml");
@@ -286,7 +298,7 @@ public class TestGenericFeatureConverter {
 
     xstream.setMode(XStream.NO_REFERENCES);
     xstream.registerConverter(new FeatureCollectionConverterWfs10());
-    xstream.registerConverter(new GenericFeatureConverter());
+    xstream.registerConverter(new GenericFeatureConverter(metacardMapper));
     xstream.registerConverter(new GmlGeometryConverter());
     // Required the Implementing class. The interface would not work...
     xstream.alias("wfs:FeatureCollection", WfsFeatureCollection.class);
