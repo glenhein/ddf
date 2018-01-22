@@ -156,7 +156,7 @@ public abstract class AbstractFeatureConverter implements FeatureConverter {
             .getAttributeFormat()
             .equals(attributeDescriptor.getType().getAttributeFormat())) {
 
-      //do this before applying the template
+      // do this before applying the template
       if (BasicTypes.GEO_TYPE
           .getAttributeFormat()
           .equals(attributeDescriptor.getType().getAttributeFormat())) {

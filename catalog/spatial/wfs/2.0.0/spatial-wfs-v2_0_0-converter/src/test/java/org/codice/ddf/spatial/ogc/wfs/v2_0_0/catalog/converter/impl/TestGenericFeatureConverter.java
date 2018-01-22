@@ -125,7 +125,8 @@ public class TestGenericFeatureConverter {
     MetacardMapper.Entry mockEntry = mock(MetacardMapper.Entry.class);
     when(mockEntry.getAttributeName()).thenAnswer(i -> attributeName);
     when(mockEntry.getFeatureProperty()).thenAnswer(i -> featureName);
-    Function<Map<String, Serializable>, String> f = c -> Optional.ofNullable(c.get(featureName)).orElse("").toString();
+    Function<Map<String, Serializable>, String> f =
+        c -> Optional.ofNullable(c.get(featureName)).orElse("").toString();
     when(mockEntry.getMappingFunction()).thenAnswer(i -> f);
     mappingEntries.add(mockEntry);
   }

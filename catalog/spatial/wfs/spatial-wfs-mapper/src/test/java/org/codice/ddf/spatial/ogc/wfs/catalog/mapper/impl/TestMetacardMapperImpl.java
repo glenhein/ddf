@@ -46,11 +46,17 @@ public class TestMetacardMapperImpl {
 
   private static final String FEATURE_CONSTANT_VALUE = "ConstantFoo";
 
-  private String[][] MAPPINGS = { {METACARD_TITLE, FEATURE_NAME, "{{" + FEATURE_NAME + "}}"},
-      {METACARD_MODIFIED, FEATURE_MODIFIED, "{{dateFormat " + FEATURE_MODIFIED + " format=\"yyyy-MM-dd\"}}" },
-      {METACARD_CONTENTSTORE, "", FEATURE_CONSTANT_VALUE},
-      {METACARD_KEYWORD_1, FEATURE_CALLSIGN, "CallSign = {{" + FEATURE_CALLSIGN + "}}"},
-      {METACARD_KEYWORD_2, FEATURE_MISSIONID, "MissionID = {{" + FEATURE_MISSIONID + "}}" } };
+  private String[][] MAPPINGS = {
+    {METACARD_TITLE, FEATURE_NAME, "{{" + FEATURE_NAME + "}}"},
+    {
+      METACARD_MODIFIED,
+      FEATURE_MODIFIED,
+      "{{dateFormat " + FEATURE_MODIFIED + " format=\"yyyy-MM-dd\"}}"
+    },
+    {METACARD_CONTENTSTORE, "", FEATURE_CONSTANT_VALUE},
+    {METACARD_KEYWORD_1, FEATURE_CALLSIGN, "CallSign = {{" + FEATURE_CALLSIGN + "}}"},
+    {METACARD_KEYWORD_2, FEATURE_MISSIONID, "MissionID = {{" + FEATURE_MISSIONID + "}}"}
+  };
 
   private MetacardMapperImpl metacardMapper;
 
@@ -59,7 +65,7 @@ public class TestMetacardMapperImpl {
     this.metacardMapper = new MetacardMapperImpl();
     metacardMapper.setFeatureType(EXAMPLE_FEATURE_TYPE);
 
-    for(String[] mapping : MAPPINGS) {
+    for (String[] mapping : MAPPINGS) {
       metacardMapper.addAttributeMapping(mapping[0], mapping[1], mapping[2]);
     }
   }
@@ -136,7 +142,5 @@ public class TestMetacardMapperImpl {
   }
 
   @Test
-  public void testTemplate() {
-    
-  }
+  public void testTemplate() {}
 }
