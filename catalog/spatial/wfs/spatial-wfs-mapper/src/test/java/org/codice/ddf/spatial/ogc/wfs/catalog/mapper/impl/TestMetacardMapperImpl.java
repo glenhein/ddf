@@ -13,7 +13,14 @@
  */
 package org.codice.ddf.spatial.ogc.wfs.catalog.mapper.impl;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.function.Predicate;
+import org.codice.ddf.spatial.ogc.wfs.catalog.mapper.MetacardMapper;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.core.Is.is;
 
 import java.util.Optional;
@@ -143,4 +150,33 @@ public class TestMetacardMapperImpl {
 
   @Test
   public void testTemplate() {}
+
+  @Test
+  public void testSetAttributeMappingsList() {
+    metacardMapper.setAttributeMappings(
+        Collections.singletonList(
+            "{\"attributeName\": \"topic.keyword\", \"featureName\": \"MissionId\", \"template\": \"{{myFeature.missionid}}\"}"));
+    List<MetacardMapper.Entry> mappingList = metacardMapper.getMappingEntryList();
+    assertThat(mappingList, hasSize(1));
+    assertThat(mappingList.get(0), is(instanceOf(FeatureAttributeEntry.class)));
+    FeatureAttributeEntry featureAttributeEntry = (FeatureAttributeEntry) mappingList.get(0);
+    assertThat(featureAttributeEntry.getAttributeName(), is("topic.keyword"));
+    assertThat(featureAttributeEntry.getFeatureProperty(), is("MissionId"));
+    assertThat(featureAttributeEntry.getTemplateText(), is("{{myFeature.missionid}}"));
+  }
+
+  @Test
+  public void testSetAttributeMappingsListWithBadJson() {
+    metacardMapper.setAttributeMappings(
+        Arrays.asList(
+            "{\"attributeName\": \"topic.keyword\", \"featureName\": \"MissionId\", \"template\": \"{{myFeature.missionid}}\"}",
+            "{\"attributeName\": \"topic.other\", \"featureName\": \"Other\", \"template\" \"{{myFeature.other}}\""));
+    List<MetacardMapper.Entry> mappingList = metacardMapper.getMappingEntryList();
+    assertThat(mappingList, hasSize(1));
+    assertThat(mappingList.get(0), is(instanceOf(FeatureAttributeEntry.class)));
+    FeatureAttributeEntry featureAttributeEntry = (FeatureAttributeEntry) mappingList.get(0);
+    assertThat(featureAttributeEntry.getAttributeName(), is("topic.keyword"));
+    assertThat(featureAttributeEntry.getFeatureProperty(), is("MissionId"));
+    assertThat(featureAttributeEntry.getTemplateText(), is("{{myFeature.missionid}}"));
+  }
 }

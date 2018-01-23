@@ -75,6 +75,10 @@ final class FeatureAttributeEntry implements Entry {
     return this::applyTemplate;
   }
 
+  String getTemplateText() {
+    return templateText;
+  }
+
   private String applyTemplate(Map<String, Serializable> map) {
     try {
       return template.apply(map);

@@ -16,9 +16,14 @@ package org.codice.ddf.spatial.ogc.wfs.catalog.mapper.impl;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
+import org.apache.commons.lang.StringUtils;
+import org.boon.json.JsonException;
+import org.boon.json.JsonFactory;
 import org.codice.ddf.spatial.ogc.wfs.catalog.mapper.MetacardMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,6 +32,12 @@ import org.slf4j.LoggerFactory;
 public class MetacardMapperImpl implements MetacardMapper {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(MetacardMapperImpl.class);
+
+  private static final String ATTRIBUTE_NAME = "attributeName";
+
+  private static final String FEATURE_NAME = "featureName";
+
+  private static final String TEMPLATE = "template";
 
   private String featureType;
 
@@ -110,5 +121,39 @@ public class MetacardMapperImpl implements MetacardMapper {
 
   public Stream<Entry> stream() {
     return Collections.unmodifiableList(mappingEntryList).stream();
+  }
+
+  List<Entry> getMappingEntryList() {
+    return mappingEntryList;
+  }
+
+  public void setAttributeMappings(List<String> attributeMappingsList) {
+
+    if (attributeMappingsList != null) {
+      mappingEntryList.clear();
+
+      attributeMappingsList
+          .stream()
+          .filter(StringUtils::isNotEmpty)
+          .map(
+              string -> {
+                try {
+                  return JsonFactory.create().readValue(string, Map.class);
+                } catch (JsonException e) {
+                  LOGGER.debug("Failed to parse attribute mapping json '{}'", string, e);
+                }
+                return null;
+              })
+          .filter(Objects::nonNull)
+          .filter(map -> map.get(ATTRIBUTE_NAME) instanceof String)
+          .filter(map -> map.get(FEATURE_NAME) instanceof String)
+          .filter(map -> map.get(TEMPLATE) instanceof String)
+          .forEach(
+              map ->
+                  addAttributeMapping(
+                      (String) map.get(ATTRIBUTE_NAME),
+                      (String) map.get(FEATURE_NAME),
+                      (String) map.get(TEMPLATE)));
+    }
   }
 }
