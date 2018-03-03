@@ -38,15 +38,17 @@ public interface Transform {
    * metacard id. If the supplier returns a null value, then a generated metacard id will be used.
    *
    * @param mimeType the mime-type of the inputFile
-   * @param idSupplier optional supplier of metacard IDs
+   * @param parentId optional ID of the parent metacard
+   * @param idSupplier optional supplier of derived metacard IDs
    * @param inputStream the contents of this input stream will be transformed
    * @param transformerId optional transformer id
    * @param transformerArguments arguments to be passed to the transformer
    * @return list of metacards
    * @throws MetacardCreationException thrown if the input file cannot be transformed
    */
-  List<Metacard> transform(
+  TransformResponse transform(
       MimeType mimeType,
+      @Nullable String parentId,
       @Nullable Supplier<String> idSupplier,
       InputStream inputStream,
       @Nullable String transformerId,
@@ -58,7 +60,8 @@ public interface Transform {
    * metacard id. If the supplier returns a null value, then a generated metacard id will be used.
    *
    * @param mimeType the mime-type of the inputFile
-   * @param idSupplier optional supplier of metacard IDs
+   * @param parentId optional ID of the parent metacard
+   * @param idSupplier optional supplier of derived metacard IDs
    * @param fileName the Metacard title will be set to this value
    * @param inputFile the contents of this file will be transformed
    * @param transformerId optional transformer id
@@ -66,8 +69,9 @@ public interface Transform {
    * @return list of metacards
    * @throws MetacardCreationException thrown if the input file cannot be transformed
    */
-  List<Metacard> transform(
+  TransformResponse transform(
       MimeType mimeType,
+      @Nullable String parentId,
       @Nullable Supplier<String> idSupplier,
       String fileName,
       File inputFile,

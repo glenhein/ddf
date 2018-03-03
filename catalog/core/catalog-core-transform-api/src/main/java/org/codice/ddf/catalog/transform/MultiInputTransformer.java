@@ -13,12 +13,10 @@
  */
 package org.codice.ddf.catalog.transform;
 
-import ddf.catalog.data.Metacard;
 import ddf.catalog.transform.CatalogTransformerException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -44,6 +42,6 @@ public interface MultiInputTransformer extends TransformerProperties {
    * @throws IOException if an I/O exception occurs when reading the {@link InputStream}
    * @throws CatalogTransformerException if an error occurs during transformation
    */
-  List<Metacard> transform(InputStream input, Map<String, ? extends Serializable> arguments)
+  TransformResponse transform(InputStream input, Map<String, ? extends Serializable> arguments)
       throws IOException, CatalogTransformerException;
 }

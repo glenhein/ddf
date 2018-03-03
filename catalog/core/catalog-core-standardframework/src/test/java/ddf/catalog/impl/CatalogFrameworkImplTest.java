@@ -158,6 +158,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Supplier;
@@ -168,6 +169,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.shiro.util.ThreadContext;
 import org.codice.ddf.catalog.transform.Transform;
+import org.codice.ddf.catalog.transform.TransformResponse;
 import org.codice.ddf.platform.util.uuidgenerator.UuidGenerator;
 import org.geotools.filter.FilterFactoryImpl;
 import org.junit.Before;
@@ -329,8 +331,11 @@ public class CatalogFrameworkImplTest {
 
     transform = mock(Transform.class);
 
+    TransformResponse transformResponse = mock(TransformResponse.class);
+
     when(transform.transform(
             any(MimeType.class),
+            any(String.class),
             any(Supplier.class),
             any(String.class),
             any(File.class),
@@ -338,10 +343,11 @@ public class CatalogFrameworkImplTest {
             any(Map.class)))
         .thenAnswer(
             invocationOnMock -> {
-              Supplier<String> supplier = (Supplier<String>) invocationOnMock.getArguments()[1];
+              String id = (String) invocationOnMock.getArguments()[1];
               MetacardImpl metacard = new MetacardImpl();
-              metacard.setId(supplier.get());
-              return Collections.singletonList(metacard);
+              metacard.setId(id);
+              when(transformResponse.getParentMetacard()).thenReturn(Optional.of(metacard));
+              return transformResponse;
             });
 
     mockRemoteDeleteOperations = mock(RemoteDeleteOperations.class);

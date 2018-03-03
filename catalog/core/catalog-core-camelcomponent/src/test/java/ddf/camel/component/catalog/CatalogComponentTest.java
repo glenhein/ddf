@@ -23,9 +23,9 @@ import ddf.catalog.transform.InputTransformer;
 import de.kalpatec.pojosr.framework.PojoServiceRegistryFactoryImpl;
 import de.kalpatec.pojosr.framework.launch.PojoServiceRegistry;
 import java.io.InputStream;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Supplier;
 import javax.activation.MimeType;
 import org.apache.camel.CamelContext;
@@ -38,6 +38,7 @@ import org.apache.camel.component.mock.MockEndpoint;
 import org.apache.camel.test.junit4.CamelTestSupport;
 import org.apache.tika.io.IOUtils;
 import org.codice.ddf.catalog.transform.Transform;
+import org.codice.ddf.catalog.transform.TransformResponse;
 import org.junit.Test;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
@@ -228,13 +229,17 @@ public class CatalogComponentTest extends CamelTestSupport {
     MockEndpoint mock = getMockEndpoint("mock:result");
     mock.expectedMinimumMessageCount(1);
 
+    TransformResponse transformResponse = mock(TransformResponse.class);
+    when(transformResponse.getParentMetacard()).thenReturn(Optional.of(getSimpleMetacard()));
+
     when(transform.transform(
             any(MimeType.class),
+            any(String.class),
             any(Supplier.class),
             any(InputStream.class),
             any(String.class),
             any(Map.class)))
-        .thenReturn(Collections.singletonList(getSimpleMetacard()));
+        .thenReturn(transformResponse);
 
     // Send in sample XML as InputStream to InputTransformer
     InputStream input = IOUtils.toInputStream(xmlInput);

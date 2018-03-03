@@ -37,6 +37,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import javax.activation.MimeType;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -46,8 +47,8 @@ import org.apache.tika.detect.Detector;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
+import org.codice.ddf.catalog.transform.TransformResponse;
 import org.codice.ddf.platform.util.InputValidation;
-import org.codice.ddf.platform.util.SingleIdSupplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -147,23 +148,25 @@ public class OperationsMetacardSupport {
           fileName = updateFileExtension(mimeTypeRaw, fileName);
         }
 
-        List<Metacard> metacards =
+        TransformResponse transformResponse =
             frameworkProperties
                 .getTransform()
                 .transform(
                     new MimeType(mimeTypeRaw),
-                    new SingleIdSupplier(contentItem.getId()),
+                    contentItem.getId(),
+                    null,
                     fileName,
                     tmpPath.toFile(),
                     null,
                     arguments);
 
-        for (Metacard metacard : metacards) {
-          metacardMap.put(metacard.getId(), metacard);
-
-          ContentItem generatedContentItem =
+        Optional<Metacard> parentMetacardOptional = transformResponse.getParentMetacard();
+        if (parentMetacardOptional.isPresent()) {
+          Metacard parentMetacard = parentMetacardOptional.get();
+          metacardMap.put(parentMetacard.getId(), parentMetacard);
+          contentItems.add(
               new ContentItemImpl(
-                  metacard.getId(),
+                  parentMetacard.getId(),
                   StringUtils.isNotEmpty(contentItem.getQualifier())
                       ? contentItem.getQualifier()
                       : "",
@@ -171,9 +174,22 @@ public class OperationsMetacardSupport {
                   mimeTypeRaw,
                   fileName,
                   size,
-                  metacard);
-          contentItems.add(generatedContentItem);
+                  parentMetacard));
         }
+
+        transformResponse
+            .getDerivedMetacards()
+            .forEach(derivedMetacard -> metacardMap.put(derivedMetacard.getId(), derivedMetacard));
+
+        transformResponse
+            .getDerivedContentItems()
+            .forEach(
+                derivedContentItem -> {
+                  Metacard metacard = derivedContentItem.getMetacard();
+                  metacardMap.put(metacard.getId(), metacard);
+                  contentItems.add(derivedContentItem);
+                });
+
       } catch (Exception e) {
         tmpContentPaths
             .values()

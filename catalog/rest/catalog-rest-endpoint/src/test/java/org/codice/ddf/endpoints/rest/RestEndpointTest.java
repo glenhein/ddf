@@ -71,6 +71,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Supplier;
@@ -91,6 +92,7 @@ import org.apache.cxf.jaxrs.ext.multipart.ContentDisposition;
 import org.apache.cxf.jaxrs.ext.multipart.MultipartBody;
 import org.apache.tika.io.IOUtils;
 import org.codice.ddf.catalog.transform.Transform;
+import org.codice.ddf.catalog.transform.TransformResponse;
 import org.codice.ddf.platform.util.uuidgenerator.UuidGenerator;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -211,7 +213,7 @@ public class RestEndpointTest {
 
     RESTEndpoint rest = new RESTEndpoint(framework);
 
-    addMatchingService(rest, Collections.singletonList(getSimpleMetacard()));
+    addMatchingService(rest, getSimpleMetacard());
 
     UriInfo info = givenUriInfo(SAMPLE_ID);
 
@@ -243,9 +245,12 @@ public class RestEndpointTest {
 
     HttpHeaders headers = createHeaders(Collections.singletonList(MediaType.APPLICATION_JSON));
 
+    TransformResponse transformResponse = mock(TransformResponse.class);
+    when(transformResponse.getParentMetacard()).thenReturn(Optional.of(new MetacardImpl()));
+
     Transform transform = mock(Transform.class);
-    when(transform.transform(any(MimeType.class), any(), any(), any(), any()))
-        .thenReturn(Collections.singletonList(new MetacardImpl()));
+    when(transform.transform(any(MimeType.class), any(), any(), any(), any(), any()))
+        .thenReturn(transformResponse);
 
     RESTEndpoint rest =
         new RESTEndpoint(framework) {
@@ -264,7 +269,7 @@ public class RestEndpointTest {
     when(mimeTypeMapper.getMimeTypeForFileExtension("xml")).thenReturn("text/xml");
     rest.setMimeTypeMapper(mimeTypeMapper);
 
-    addMatchingService(rest, Collections.singletonList(getSimpleMetacard()));
+    addMatchingService(rest, getSimpleMetacard());
 
     UriInfo info = givenUriInfo(SAMPLE_ID);
 
@@ -322,14 +327,18 @@ public class RestEndpointTest {
     metacard.setMetadata("Some Text Again");
     when(inputTransformer.transform(any())).thenReturn(metacard);
 
+    TransformResponse transformResponse = mock(TransformResponse.class);
+    when(transformResponse.getParentMetacard()).thenReturn(Optional.of(metacard));
+
     Transform transform = mock(Transform.class);
     when(transform.transform(
             any(MimeType.class),
+            any(String.class),
             any(Supplier.class),
             any(InputStream.class),
             eq("xml"),
             any(Map.class)))
-        .thenReturn(Collections.singletonList(metacard));
+        .thenReturn(transformResponse);
 
     RESTEndpoint rest =
         new RESTEndpoint(framework) {
@@ -344,7 +353,7 @@ public class RestEndpointTest {
     when(mimeTypeMapper.getMimeTypeForFileExtension("xml")).thenReturn("text/xml");
     rest.setMimeTypeMapper(mimeTypeMapper);
 
-    addMatchingService(rest, Collections.singletonList(getSimpleMetacard()));
+    addMatchingService(rest, getSimpleMetacard());
 
     List<Attachment> attachments = new ArrayList<>();
     ContentDisposition contentDisposition =
@@ -397,14 +406,18 @@ public class RestEndpointTest {
     metacard.setMetadata("Some Text Again");
     when(inputTransformer.transform(any())).thenReturn(metacard);
 
+    TransformResponse transformResponse = mock(TransformResponse.class);
+    when(transformResponse.getParentMetacard()).thenReturn(Optional.of(metacard));
+
     Transform transform = mock(Transform.class);
     when(transform.transform(
             any(MimeType.class),
+            any(String.class),
             any(Supplier.class),
             any(InputStream.class),
             eq("xml"),
             any(Map.class)))
-        .thenReturn(Collections.singletonList(metacard));
+        .thenReturn(transformResponse);
 
     RESTEndpoint rest =
         new RESTEndpoint(framework) {
@@ -419,7 +432,7 @@ public class RestEndpointTest {
     when(mimeTypeMapper.getMimeTypeForFileExtension("xml")).thenReturn("text/xml");
     rest.setMimeTypeMapper(mimeTypeMapper);
 
-    addMatchingService(rest, Collections.singletonList(getSimpleMetacard()));
+    addMatchingService(rest, getSimpleMetacard());
 
     List<Attachment> attachments = new ArrayList<>();
     ContentDisposition contentDisposition =
@@ -718,7 +731,7 @@ public class RestEndpointTest {
 
     RESTEndpoint restEndpoint = new RESTEndpoint(framework);
 
-    addMatchingService(restEndpoint, Collections.singletonList(getSimpleMetacard()));
+    addMatchingService(restEndpoint, getSimpleMetacard());
     restEndpoint.setTikaMimeTypeResolver(new TikaMimeTypeResolver());
     FilterBuilder filterBuilder = new GeotoolsFilterBuilder();
     restEndpoint.setFilterBuilder(filterBuilder);
@@ -986,7 +999,7 @@ public class RestEndpointTest {
 
     RESTEndpoint rest = new RESTEndpoint(framework);
 
-    addMatchingService(rest, Collections.singletonList(getSimpleMetacard()));
+    addMatchingService(rest, getSimpleMetacard());
 
     UriInfo info = givenUriInfo(SAMPLE_ID);
 
@@ -1066,13 +1079,16 @@ public class RestEndpointTest {
     return generatedMetacard;
   }
 
-  private Transform addMatchingService(RESTEndpoint rest, List<Metacard> metacards)
+  private Transform addMatchingService(RESTEndpoint rest, Metacard metacard)
       throws MetacardCreationException {
 
     Transform transform = mock(Transform.class);
 
-    when(transform.transform(any(MimeType.class), any(), any(), any(), any()))
-        .thenReturn(metacards);
+    TransformResponse transformResponse = mock(TransformResponse.class);
+    when(transformResponse.getParentMetacard()).thenReturn(Optional.of(metacard));
+
+    when(transform.transform(any(MimeType.class), any(), any(), any(), any(), any()))
+        .thenReturn(transformResponse);
 
     rest.setTransform(transform);
 

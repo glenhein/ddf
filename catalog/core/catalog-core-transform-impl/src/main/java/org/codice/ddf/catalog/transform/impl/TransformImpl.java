@@ -42,6 +42,7 @@ import org.codice.ddf.catalog.locator.TransformerLocator;
 import org.codice.ddf.catalog.transform.MultiInputTransformer;
 import org.codice.ddf.catalog.transform.MultiMetacardTransformer;
 import org.codice.ddf.catalog.transform.Transform;
+import org.codice.ddf.catalog.transform.TransformResponse;
 import org.codice.ddf.platform.util.TemporaryFileBackedOutputStream;
 import org.codice.ddf.platform.util.uuidgenerator.UuidGenerator;
 import org.slf4j.Logger;
@@ -61,8 +62,9 @@ public class TransformImpl implements Transform {
   }
 
   @Override
-  public List<Metacard> transform(
+  public TransformResponse transform(
       MimeType mimeType,
+      String parentId,
       Supplier<String> idSupplier,
       String fileName,
       File inputFile,
@@ -70,25 +72,31 @@ public class TransformImpl implements Transform {
       Map<String, ? extends Serializable> transformerArguments)
       throws MetacardCreationException {
     try (InputStream transformerStream = Files.asByteSource(inputFile).openStream()) {
-      List<Metacard> metacards =
-          transform(mimeType, idSupplier, transformerStream, transformerId, transformerArguments);
-      metacards.forEach(metacard -> setTitle(fileName, metacard));
-      return metacards;
+      TransformResponse transformResponse =
+          transform(
+              mimeType,
+              parentId,
+              idSupplier,
+              transformerStream,
+              transformerId,
+              transformerArguments);
+      transformResponse.getParentMetacard().ifPresent(metacard -> setTitle(fileName, metacard));
+      transformResponse
+          .getDerivedContentItems()
+          .forEach(contentItem -> setTitle(contentItem.getFilename(), contentItem.getMetacard()));
+      // TODO Should we set the title of derived metacards? We could do something like
+      // 'fileName-INDEX'. The problem is derived metacards don't have their own filename.
+      return transformResponse;
     } catch (IOException e) {
       throw new MetacardCreationException(
           String.format("Could not open the input file: %s", inputFile), e);
     }
   }
 
-  private void setTitle(String fileName, Metacard metacard) {
-    if (metacard.getAttribute(Metacard.TITLE) == null) {
-      metacard.setAttribute(new AttributeImpl(Metacard.TITLE, fileName));
-    }
-  }
-
   @Override
-  public List<Metacard> transform(
+  public TransformResponse transform(
       MimeType mimeType,
+      String parentId,
       Supplier<String> idSupplier,
       InputStream message,
       String transformerId,
@@ -113,12 +121,12 @@ public class TransformImpl implements Transform {
 
       List<String> stackTraceList = new ArrayList<>();
 
-      List<Metacard> metacards = null;
+      TransformResponse transformResponse = null;
 
       for (MultiInputTransformer transformer : listOfCandidates) {
         try (InputStream inputStreamMessageCopy =
             fileBackedOutputStream.asByteSource().openStream()) {
-          metacards = transformer.transform(inputStreamMessageCopy, transformerArguments);
+          transformResponse = transformer.transform(inputStreamMessageCopy, transformerArguments);
         } catch (CatalogTransformerException | IOException e) {
           List<String> stackTraces = Arrays.asList(ExceptionUtils.getRootCauseStackTrace(e));
           stackTraceList.add(
@@ -126,19 +134,19 @@ public class TransformImpl implements Transform {
           stackTraceList.addAll(stackTraces);
           LOGGER.debug("Transformer [{}] could not create metacard.", transformer, e);
         }
-        if (metacards != null) {
+        if (isNotEmpty(transformResponse)) {
           break;
         }
       }
 
-      if (CollectionUtils.isEmpty(metacards)) {
+      if (isEmpty(transformResponse)) {
         throw new MetacardCreationException(
             String.format(
                 "Could not create metacard with mimeType %s : %s",
                 mimeType, StringUtils.join(stackTraceList, "\n")));
       }
 
-      return setMetacardIds(idSupplier, metacards);
+      return setMetacardIds(parentId, idSupplier, transformResponse);
     } catch (IOException e) {
       throw new MetacardCreationException("Could not create metacard.", e);
     }
@@ -184,7 +192,7 @@ public class TransformImpl implements Transform {
         LOGGER.debug("Transformer [{}] could not transform metacard.", transformer, e);
       }
 
-      if (binaryContents != null) {
+      if (CollectionUtils.isNotEmpty(binaryContents)) {
         break;
       }
     }
@@ -323,6 +331,10 @@ public class TransformImpl implements Transform {
     return uuidGenerator.generateUuid();
   }
 
+  private String calculateId(String id) {
+    return id != null ? id : uuidGenerator.generateUuid();
+  }
+
   private BinaryContent transformSourceResponse(
       SourceResponse response,
       Map<String, Serializable> transformerArguments,
@@ -350,10 +362,26 @@ public class TransformImpl implements Transform {
     return binaryContent;
   }
 
-  private List<Metacard> setMetacardIds(Supplier<String> idSupplier, List<Metacard> metacards) {
-    metacards.forEach(
-        metacard -> metacard.setAttribute(new AttributeImpl(Metacard.ID, calculateId(idSupplier))));
-    return metacards;
+  private void setMetacardId(Metacard metacard, String id) {
+    metacard.setAttribute(new AttributeImpl(Metacard.ID, id));
+  }
+
+  private void setMetacardId(Metacard metacard, Supplier<String> supplier) {
+    setMetacardId(metacard, calculateId(supplier));
+  }
+
+  private TransformResponse setMetacardIds(
+      String parentId, Supplier<String> idSupplier, TransformResponse transformResponse) {
+    transformResponse
+        .getParentMetacard()
+        .ifPresent(metacard -> setMetacardId(metacard, calculateId(parentId)));
+    transformResponse
+        .getDerivedMetacards()
+        .forEach(metacard -> setMetacardId(metacard, idSupplier));
+    transformResponse
+        .getDerivedContentItems()
+        .forEach(contentItem -> setMetacardId(contentItem.getMetacard(), idSupplier));
+    return transformResponse;
   }
 
   private void copy(InputStream message, TemporaryFileBackedOutputStream fileBackedOutputStream)
@@ -368,5 +396,25 @@ public class TransformImpl implements Transform {
     } catch (IOException e) {
       throw new MetacardCreationException("Could not copy bytes of content message.", e);
     }
+  }
+
+  private void setTitle(String fileName, Metacard metacard) {
+    if (metacard.getAttribute(Metacard.TITLE) == null) {
+      metacard.setAttribute(new AttributeImpl(Metacard.TITLE, fileName));
+    }
+  }
+
+  private boolean isEmpty(TransformResponse transformResponse) {
+    if (transformResponse == null) {
+      return true;
+    }
+
+    return !transformResponse.getParentMetacard().isPresent()
+        && CollectionUtils.isEmpty(transformResponse.getDerivedMetacards())
+        && CollectionUtils.isEmpty(transformResponse.getDerivedContentItems());
+  }
+
+  private boolean isNotEmpty(TransformResponse transformResponse) {
+    return !isEmpty(transformResponse);
   }
 }

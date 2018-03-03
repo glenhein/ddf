@@ -39,6 +39,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Supplier;
 import javax.activation.MimeType;
 import javax.activation.MimeTypeParseException;
@@ -46,6 +47,7 @@ import org.codice.ddf.catalog.locator.TransformerLocator;
 import org.codice.ddf.catalog.transform.MultiInputTransformer;
 import org.codice.ddf.catalog.transform.MultiMetacardTransformer;
 import org.codice.ddf.catalog.transform.Transform;
+import org.codice.ddf.catalog.transform.TransformResponse;
 import org.codice.ddf.platform.util.uuidgenerator.UuidGenerator;
 import org.junit.Before;
 import org.junit.Rule;
@@ -78,7 +80,7 @@ public class TransformImplTest {
     uuidGenerator = mock(UuidGenerator.class);
     transform = new TransformImpl(transformerLocator, uuidGenerator);
     idSupplier = mock(Supplier.class);
-    when(idSupplier.get()).thenReturn("1");
+    when(idSupplier.get()).thenReturn(null);
   }
 
   @Test
@@ -158,23 +160,29 @@ public class TransformImplTest {
       throws MimeTypeParseException, MetacardCreationException, IOException,
           CatalogTransformerException {
 
+    TransformResponse transformResponse = mock(TransformResponse.class);
+    when(transformResponse.getParentMetacard()).thenReturn(Optional.of(metacard));
+
     MultiInputTransformer transformer = mock(MultiInputTransformer.class);
     when(transformer.transform(any(InputStream.class), any(Map.class)))
-        .thenReturn(Collections.singletonList(metacard));
+        .thenReturn(transformResponse);
 
     when(transformerLocator.findMultiInputTransformers(eq("xyz")))
         .thenReturn(Collections.singletonList(transformer));
 
-    List<Metacard> metacards =
+    TransformResponse transformResponseActual =
         transform.transform(
             new MimeType("text/xml"),
+            "1",
             idSupplier,
             new ByteArrayInputStream("<xml></xml>".getBytes()),
             "xyz",
             Collections.emptyMap());
 
-    assertThat(metacards, hasSize(1));
-    assertThat(metacards.get(0), is(metacard));
+    assertThat(transformResponseActual.getParentMetacard().isPresent(), is(true));
+    assertThat(transformResponseActual.getParentMetacard().get(), is(metacard));
+    assertThat(transformResponseActual.getDerivedContentItems(), hasSize(0));
+    assertThat(transformResponseActual.getDerivedMetacards(), hasSize(0));
   }
 
   @Test
@@ -182,23 +190,27 @@ public class TransformImplTest {
       throws MimeTypeParseException, MetacardCreationException, IOException,
           CatalogTransformerException {
 
+    TransformResponse transformResponse = mock(TransformResponse.class);
+    when(transformResponse.getParentMetacard()).thenReturn(Optional.of(metacard));
+
     MultiInputTransformer transformer = mock(MultiInputTransformer.class);
     when(transformer.transform(any(InputStream.class), any(Map.class)))
-        .thenReturn(Collections.singletonList(metacard));
+        .thenReturn(transformResponse);
 
     when(transformerLocator.findMultiInputTransformers(any(MimeType.class)))
         .thenReturn(Collections.singletonList(transformer));
 
-    List<Metacard> metacards =
+    TransformResponse transformResponseActual =
         transform.transform(
             new MimeType("text/xml"),
+            "1",
             idSupplier,
             new ByteArrayInputStream("<xml></xml>".getBytes()),
             null,
             Collections.emptyMap());
 
-    assertThat(metacards, hasSize(1));
-    assertThat(metacards.get(0), is(metacard));
+    assertThat(transformResponseActual.getParentMetacard().isPresent(), is(true));
+    assertThat(transformResponseActual.getParentMetacard().get(), is(metacard));
   }
 
   @Test(expected = MetacardCreationException.class)
@@ -219,6 +231,7 @@ public class TransformImplTest {
 
     transform.transform(
         new MimeType("text/xml"),
+        "1",
         idSupplier,
         new ByteArrayInputStream("<xml></xml>".getBytes()),
         "xyz",
@@ -230,9 +243,12 @@ public class TransformImplTest {
       throws MimeTypeParseException, MetacardCreationException, IOException,
           CatalogTransformerException {
 
+    TransformResponse transformResponse = mock(TransformResponse.class);
+    when(transformResponse.getParentMetacard()).thenReturn(Optional.of(metacard));
+
     MultiInputTransformer transformer = mock(MultiInputTransformer.class);
     when(transformer.transform(any(InputStream.class), any(Map.class)))
-        .thenReturn(Collections.singletonList(metacard));
+        .thenReturn(transformResponse);
 
     when(transformerLocator.findMultiInputTransformers(eq("xyz")))
         .thenReturn(Collections.singletonList(transformer));
@@ -241,7 +257,7 @@ public class TransformImplTest {
     when(inputStream.read(any())).thenThrow(IOException.class);
 
     transform.transform(
-        new MimeType("text/xml"), idSupplier, inputStream, "xyz", Collections.emptyMap());
+        new MimeType("text/xml"), "1", idSupplier, inputStream, "xyz", Collections.emptyMap());
   }
 
   @Test
@@ -249,9 +265,12 @@ public class TransformImplTest {
       throws IOException, CatalogTransformerException, MimeTypeParseException,
           MetacardCreationException {
 
+    TransformResponse transformResponse = mock(TransformResponse.class);
+    when(transformResponse.getParentMetacard()).thenReturn(Optional.of(metacard));
+
     MultiInputTransformer transformer = mock(MultiInputTransformer.class);
     when(transformer.transform(any(InputStream.class), any(Map.class)))
-        .thenReturn(Collections.singletonList(metacard));
+        .thenReturn(transformResponse);
 
     when(transformerLocator.findMultiInputTransformers(eq("xyz")))
         .thenReturn(Collections.singletonList(transformer));
@@ -261,17 +280,19 @@ public class TransformImplTest {
     }
     final ArgumentCaptor<Attribute> captor = ArgumentCaptor.forClass(Attribute.class);
 
-    List<Metacard> metacards =
+    TransformResponse transformResponseActual =
         transform.transform(
             new MimeType("text/xml"),
+            "1",
             idSupplier,
             "fileName",
             tempFile,
             "xyz",
             Collections.emptyMap());
 
-    assertThat(metacards, hasSize(1));
-    assertThat(metacards.get(0), is(metacard));
+    assertThat(transformResponseActual.getParentMetacard().isPresent(), is(true));
+    assertThat(transformResponseActual.getParentMetacard().get(), is(metacard));
+
     verify(metacard, times(2)).setAttribute(captor.capture());
 
     assertThat(captor.getValue().getName(), is(Metacard.TITLE));

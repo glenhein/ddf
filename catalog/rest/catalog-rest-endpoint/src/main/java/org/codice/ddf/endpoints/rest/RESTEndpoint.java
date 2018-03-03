@@ -77,6 +77,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -114,7 +115,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.cxf.jaxrs.ext.multipart.Attachment;
 import org.apache.cxf.jaxrs.ext.multipart.MultipartBody;
 import org.codice.ddf.catalog.transform.Transform;
-import org.codice.ddf.platform.util.SingleIdSupplier;
+import org.codice.ddf.catalog.transform.TransformResponse;
 import org.codice.ddf.platform.util.uuidgenerator.UuidGenerator;
 import org.opengis.filter.Filter;
 import org.osgi.framework.Bundle;
@@ -656,11 +657,21 @@ public class RESTEndpoint implements RESTService {
     }
 
     try {
-      Metacard metacard =
+      TransformResponse transformResponse =
           getTransform()
               .transform(
-                  mimeType, () -> "assigned-when-ingested", stream, null, Collections.emptyMap())
-              .get(0);
+                  mimeType,
+                  "assigned-when-ingested",
+                  () -> "assigned-when-ingested",
+                  stream,
+                  null,
+                  Collections.emptyMap());
+
+      if (!transformResponse.getParentMetacard().isPresent()) {
+        return createBadRequestResponse("Unable to create metacard");
+      }
+
+      Metacard metacard = transformResponse.getParentMetacard().get();
       String metacardId = metacard.getId();
       LOGGER.debug("Metacard {} created", metacardId);
       LOGGER.debug(
@@ -738,18 +749,14 @@ public class RESTEndpoint implements RESTService {
         }
 
         if (createInfo == null) {
-          List<Metacard> metacards =
+          TransformResponse transformResponse =
               getTransform()
-                  .transform(
-                      mimeType,
-                      new SingleIdSupplier(id),
-                      message,
-                      transformerParam,
-                      Collections.emptyMap());
-          if (CollectionUtils.isEmpty(metacards)) {
+                  .transform(mimeType, id, null, message, transformerParam, Collections.emptyMap());
+          if (!transformResponse.getParentMetacard().isPresent()) {
             throw new MetacardCreationException("Unable to transform message into a metacard.");
           }
-          UpdateRequest updateRequest = new UpdateRequestImpl(id, metacards.get(0));
+          UpdateRequest updateRequest =
+              new UpdateRequestImpl(id, transformResponse.getParentMetacard().get());
           catalogFramework.update(updateRequest);
         } else {
           UpdateStorageRequest streamUpdateRequest =
@@ -832,14 +839,39 @@ public class RESTEndpoint implements RESTService {
           }
         }
 
+        String id = null;
+
         CreateResponse createResponse;
         if (createInfo == null) {
-          CreateRequest createRequest =
-              new CreateRequestImpl(
-                  getTransform()
-                      .transform(
-                          mimeType, null, message, transformerParam, Collections.emptyMap()));
-          createResponse = catalogFramework.create(createRequest);
+
+          TransformResponse transformResponse =
+              getTransform()
+                  .transform(
+                      mimeType, null, null, message, transformerParam, Collections.emptyMap());
+
+          List<Metacard> metacardsToCreate =
+              new LinkedList<>(transformResponse.getDerivedMetacards());
+          transformResponse.getParentMetacard().ifPresent(metacardsToCreate::add);
+
+          if (transformResponse.getParentMetacard().isPresent()) {
+            CreateRequest createRequest =
+                new CreateRequestImpl(transformResponse.getParentMetacard().get());
+            createResponse = catalogFramework.create(createRequest);
+            id = createResponse.getCreatedMetacards().get(0).getId();
+          }
+
+          if (CollectionUtils.isNotEmpty(transformResponse.getDerivedMetacards())) {
+            CreateRequest createRequest =
+                new CreateRequestImpl(transformResponse.getDerivedMetacards());
+            catalogFramework.create(createRequest);
+          }
+
+          if (CollectionUtils.isNotEmpty(transformResponse.getDerivedContentItems())) {
+            CreateStorageRequest streamCreateRequest =
+                new CreateStorageRequestImpl(transformResponse.getDerivedContentItems(), null);
+            catalogFramework.create(streamCreateRequest);
+          }
+
         } else {
           CreateStorageRequest streamCreateRequest =
               new CreateStorageRequestImpl(
@@ -852,9 +884,11 @@ public class RESTEndpoint implements RESTService {
                           createInfo.getMetacard())),
                   null);
           createResponse = catalogFramework.create(streamCreateRequest);
+          // TODO phil: the convention I've been following is that the response header contains the
+          // ID of the parent metacard, but at this point, I don't know which metacard is the
+          // parent.
+          id = createResponse.getCreatedMetacards().get(0).getId();
         }
-
-        String id = createResponse.getCreatedMetacards().get(0).getId();
 
         LOGGER.debug("Create Response id [{}]", id);
 
@@ -1028,17 +1062,20 @@ public class RESTEndpoint implements RESTService {
     }
     try {
       MimeType mimeType = new MimeType(attachment.getContentType().toString());
-      List<Metacard> metacards =
+      TransformResponse transformResponse =
           getTransform()
               .transform(
                   mimeType,
+                  "assigned-when-ingested",
                   () -> "assigned-when-ingested",
                   inputStream,
                   transformer,
                   Collections.emptyMap());
-      if (metacards != null && !metacards.isEmpty()) {
-        return metacards.get(0);
+
+      if (transformResponse.getParentMetacard().isPresent()) {
+        return transformResponse.getParentMetacard().get();
       }
+
       return null;
     } catch (MimeTypeParseException | MetacardCreationException e) {
       LOGGER.debug("Unable to parse metadata {}", attachment.getContentType().toString());

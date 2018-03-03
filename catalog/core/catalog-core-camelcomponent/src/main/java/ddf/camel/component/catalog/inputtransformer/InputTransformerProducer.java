@@ -22,13 +22,13 @@ import ddf.catalog.transform.CatalogTransformerException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
-import java.util.List;
+import java.util.Optional;
 import javax.activation.MimeType;
 import javax.activation.MimeTypeParseException;
 import org.apache.camel.Message;
-import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.codice.ddf.catalog.transform.Transform;
+import org.codice.ddf.catalog.transform.TransformResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -105,13 +105,15 @@ public class InputTransformerProducer extends TransformerProducer {
       throws MetacardCreationException {
     LOGGER.trace("ENTERING: generateMetacard");
 
-    List<Metacard> metacards =
-        transform.transform(mimeType, null, message, null, Collections.emptyMap());
+    TransformResponse transformResponse =
+        transform.transform(mimeType, null, null, message, null, Collections.emptyMap());
 
-    if (CollectionUtils.isEmpty(metacards)) {
+    Optional<Metacard> optionalMetacard = transformResponse.getParentMetacard();
+
+    if (!optionalMetacard.isPresent()) {
       throw new MetacardCreationException("Could not create metacard with mimeType " + mimeType);
     }
 
-    return metacards.get(0);
+    return optionalMetacard.get();
   }
 }

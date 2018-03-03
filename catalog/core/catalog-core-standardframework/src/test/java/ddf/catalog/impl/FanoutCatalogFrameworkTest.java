@@ -82,11 +82,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Supplier;
 import javax.activation.MimeType;
 import org.codice.ddf.catalog.transform.Transform;
+import org.codice.ddf.catalog.transform.TransformResponse;
 import org.codice.ddf.platform.util.uuidgenerator.UuidGenerator;
 import org.junit.Before;
 import org.junit.Test;
@@ -472,15 +474,19 @@ public class FanoutCatalogFrameworkTest {
     MimeTypeMapper mimeTypeMapper = mock(MimeTypeMapper.class);
     doReturn("extension").when(mimeTypeMapper).getFileExtensionForMimeType(anyString());
 
+    TransformResponse transformResponse = mock(TransformResponse.class);
+    when(transformResponse.getParentMetacard()).thenReturn(Optional.of(metacard));
+
     Transform transform = mock(Transform.class);
     when(transform.transform(
             any(MimeType.class),
+            any(String.class),
             any(Supplier.class),
             any(String.class),
             any(File.class),
             any(String.class),
             any(Map.class)))
-        .thenReturn(Collections.singletonList(metacard));
+        .thenReturn(transformResponse);
 
     frameworkProperties.setCatalogProviders(Collections.singletonList(catalogProvider));
     frameworkProperties.setStorageProviders(Collections.singletonList(storageProvider));
