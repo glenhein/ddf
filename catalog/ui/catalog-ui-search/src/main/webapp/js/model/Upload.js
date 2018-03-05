@@ -101,6 +101,7 @@ module.exports = Backbone.Model.extend({
                 success: true,
                 message: message
             });
+
             checkValidation(this);
         }
     },

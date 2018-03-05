@@ -85,7 +85,8 @@ module.exports = Backbone.AssociatedModel.extend({
         this.get('uploads').add({
             file: file
         }, {
-            dropzone: this.options.dropzone
+            dropzone: this.options.dropzone,
+            list: this.options.list
         });
     },
     handleSuccess: function(file) {

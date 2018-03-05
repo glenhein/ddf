@@ -83,9 +83,9 @@ module.exports = Marionette.LayoutView.extend({
         this.listenTo(this.listSelect.currentView.model, 'change:value', this.updateResultsList);
         this.listenTo(this.listSelect.currentView.model, 'change:value', this.handleSelection);
         this.listenTo(this.listSelect.currentView.model, 'change:value', this.handleEmptyList);
-        this.listenTo(this.model, 'add remove update', this.handleEmptyLists);
-        this.listenTo(this.model, 'add remove update', this.handleSelection);
-        this.listenTo(this.model, 'change:list.bookmarks', this.handleEmptyList);
+        this.listenTo(this.model, 'remove update', this.handleEmptyLists);
+        this.listenTo(this.model, 'remove update', this.handleSelection);
+        this.listenTo(this.model, 'change:list.bookmarks', this.handleBookmarksChange);
         this.listenTo(this.model, 'add', this.handleAdd);
         this.updateResultsList();
         this.handleEmptyLists();
@@ -96,6 +96,8 @@ module.exports = Marionette.LayoutView.extend({
         if (options.preventSwitch !== true) {
             this.listSelect.currentView.model.set('value', newList.id);
             this.listSelect.currentView.model.close();
+            this.handleEmptyLists();
+            this.handleSelection();
         }
     },
     handleSelection: function() {
@@ -105,6 +107,15 @@ module.exports = Marionette.LayoutView.extend({
         this.$el.toggleClass('is-empty-lists', this.model.isEmpty());
         if (this.model.length === 1){
             this.listSelect.currentView.model.set('value', this.model.first().id);
+        }
+    },
+    handleBookmarksChange: function() {
+        if (this.model.get(selectedListId)
+            && !this.model.get(selectedListId).isEmpty()
+            && (this.listResults.currentView === undefined || this.listResults.currentView.model.id !== selectedListId)) {
+            this.updateResultsList();
+        } else {
+            this.handleEmptyList();
         }
     },
     handleEmptyList: function() {
