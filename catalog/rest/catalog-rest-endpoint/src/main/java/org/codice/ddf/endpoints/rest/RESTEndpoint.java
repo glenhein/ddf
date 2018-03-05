@@ -16,6 +16,7 @@ package org.codice.ddf.endpoints.rest;
 import static ddf.catalog.data.AttributeType.AttributeFormat.BINARY;
 import static ddf.catalog.data.AttributeType.AttributeFormat.OBJECT;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteSource;
 import ddf.catalog.CatalogFramework;
 import ddf.catalog.Constants;
@@ -81,6 +82,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import javax.activation.MimeType;
 import javax.activation.MimeTypeParseException;
 import javax.servlet.http.HttpServletRequest;
@@ -114,6 +117,7 @@ import org.apache.commons.io.input.BoundedInputStream;
 import org.apache.commons.lang.StringUtils;
 import org.apache.cxf.jaxrs.ext.multipart.Attachment;
 import org.apache.cxf.jaxrs.ext.multipart.MultipartBody;
+import org.codice.ddf.catalog.transform.ListMultiInputTransformer;
 import org.codice.ddf.catalog.transform.Transform;
 import org.codice.ddf.catalog.transform.TransformResponse;
 import org.codice.ddf.platform.util.uuidgenerator.UuidGenerator;
@@ -755,9 +759,12 @@ public class RESTEndpoint implements RESTService {
           if (!transformResponse.getParentMetacard().isPresent()) {
             throw new MetacardCreationException("Unable to transform message into a metacard.");
           }
+
           UpdateRequest updateRequest =
               new UpdateRequestImpl(id, transformResponse.getParentMetacard().get());
+
           catalogFramework.update(updateRequest);
+
         } else {
           UpdateStorageRequest streamUpdateRequest =
               new UpdateStorageRequestImpl(
@@ -822,6 +829,108 @@ public class RESTEndpoint implements RESTService {
       MultipartBody multipartBody,
       @QueryParam("transform") String transformerParam,
       InputStream message) {
+    return addDocument(
+        headers,
+        requestUriInfo,
+        httpRequest,
+        multipartBody,
+        transformerParam,
+        message,
+        Collections.emptyMap(),
+        metacard -> {});
+
+    //    LOGGER.debug("POST");
+    //    Response response;
+    //
+    //    MimeType mimeType = getMimeType(headers);
+    //
+    //    try {
+    //      if (message != null) {
+    //        CreateInfo createInfo = null;
+    //        if (multipartBody != null) {
+    //          List<Attachment> contentParts = multipartBody.getAllAttachments();
+    //          if (CollectionUtils.isNotEmpty(contentParts)) {
+    //            createInfo = parseAttachments(contentParts, transformerParam);
+    //          } else {
+    //            LOGGER.debug("No file contents attachment found");
+    //          }
+    //        }
+    //
+    //        CreateResponse createResponse;
+    //        if (createInfo == null) {
+    //          CreateRequest createRequest =
+    //              new CreateRequestImpl(
+    //                  getTransform()
+    //                      .transform(
+    //                          mimeType, null, message, transformerParam, Collections.emptyMap()));
+    //          createResponse = catalogFramework.create(createRequest);
+    //        } else {
+    //          CreateStorageRequest streamCreateRequest =
+    //              new CreateStorageRequestImpl(
+    //                  Collections.singletonList(
+    //                      new IncomingContentItem(
+    //                          uuidGenerator,
+    //                          createInfo.getStream(),
+    //                          createInfo.getContentType(),
+    //                          createInfo.getFilename(),
+    //                          createInfo.getMetacard())),
+    //                  null);
+    //          createResponse = catalogFramework.create(streamCreateRequest);
+    //        }
+    //
+    //        String id = createResponse.getCreatedMetacards().get(0).getId();
+    //
+    //        LOGGER.debug("Create Response id [{}]", id);
+    //
+    //        UriBuilder uriBuilder = requestUriInfo.getAbsolutePathBuilder().path("/" + id);
+    //
+    //        ResponseBuilder responseBuilder = Response.created(uriBuilder.build());
+    //
+    //        responseBuilder.header(Metacard.ID, id);
+    //
+    //        response = responseBuilder.build();
+    //
+    //        LOGGER.debug("Entry successfully saved, id: {}", id);
+    //        if (INGEST_LOGGER.isInfoEnabled()) {
+    //          INGEST_LOGGER.info("Entry successfully saved, id: {}", id);
+    //        }
+    //      } else {
+    //        String errorMessage = "No content found, cannot do CREATE.";
+    //        LOGGER.info(errorMessage);
+    //        return createBadRequestResponse(errorMessage);
+    //      }
+    //    } catch (SourceUnavailableException e) {
+    //      String exceptionMessage = "Cannot create catalog entry because source is unavailable: ";
+    //      LOGGER.info(exceptionMessage, e);
+    //      // Catalog framework logs these exceptions to the ingest logger so we don't have to.
+    //      throw new InternalServerErrorException(exceptionMessage);
+    //    } catch (InternalIngestException e) {
+    //      String exceptionMessage = "Error while storing entry in catalog: ";
+    //      LOGGER.info(exceptionMessage, e);
+    //      // Catalog framework logs these exceptions to the ingest logger so we don't have to.
+    //      throw new InternalServerErrorException(exceptionMessage);
+    //    } catch (MetacardCreationException | IngestException e) {
+    //      String errorMessage = "Error while storing entry in catalog: ";
+    //      LOGGER.info(errorMessage, e);
+    //      // Catalog framework logs these exceptions to the ingest logger so we don't have to.
+    //      return createBadRequestResponse(errorMessage);
+    //    } finally {
+    //      IOUtils.closeQuietly(message);
+    //    }
+    //
+    //    return response;
+  }
+
+  private Response addDocument(
+      @Context HttpHeaders headers,
+      @Context UriInfo requestUriInfo,
+      @Context HttpServletRequest httpRequest,
+      MultipartBody multipartBody,
+      @QueryParam("transform") String transformerParam,
+      InputStream message,
+      Map<String, ? extends Serializable> transformerArguments,
+      Consumer<Metacard> metacardConsumer) {
+
     LOGGER.debug("POST");
     Response response;
 
@@ -883,7 +992,7 @@ public class RESTEndpoint implements RESTService {
                           createInfo.getFilename(),
                           createInfo.getMetacard())),
                   null);
-          createResponse = catalogFramework.create(streamCreateRequest);
+          createResponse = catalogFramework.create(streamCreateRequest, transformerArguments);
           // TODO phil: the convention I've been following is that the response header contains the
           // ID of the parent metacard, but at this point, I don't know which metacard is the
           // parent.
@@ -929,6 +1038,136 @@ public class RESTEndpoint implements RESTService {
     }
 
     return response;
+  }
+
+  @POST
+  @Consumes("multipart/*")
+  @Path("/list")
+  public Response addDocumentToList(
+      @Context HttpHeaders headers,
+      @Context UriInfo requestUriInfo,
+      @Context HttpServletRequest httpRequest,
+      MultipartBody multipartBody,
+      @QueryParam("transform") String transformerParam,
+      InputStream message) {
+    LOGGER.debug("POST");
+
+    String listType = headers.getRequestHeaders().getFirst(RESTService.LIST_TYPE_HEADER);
+
+    if (StringUtils.isBlank(listType)) {
+      String exceptionMessage =
+          String.format("The header %s must be set.", RESTService.LIST_TYPE_HEADER);
+      LOGGER.info(exceptionMessage);
+      return createBadRequestResponse(exceptionMessage);
+    }
+
+    Map<String, ? extends Serializable> transformerArguments =
+        new ImmutableMap.Builder<String, String>()
+            .put(ListMultiInputTransformer.LIST_TYPE, listType)
+            .build();
+
+    List<Metacard> metacards = new LinkedList<>();
+
+    Response response =
+        addDocument(
+            headers,
+            requestUriInfo,
+            httpRequest,
+            multipartBody,
+            transformerParam,
+            message,
+            transformerArguments,
+            metacards::add);
+
+    ResponseBuilder responseBuilder = Response.fromResponse(response);
+
+    responseBuilder.header(
+        "Added-IDs", metacards.stream().map(Metacard::getId).collect(Collectors.joining(",")));
+
+    return responseBuilder.build();
+
+    //    MimeType mimeType = getMimeType(headers);
+    //
+    //    try {
+    //      if (message != null) {
+    //        CreateInfo createInfo = null;
+    //        if (multipartBody != null) {
+    //          List<Attachment> contentParts = multipartBody.getAllAttachments();
+    //          if (CollectionUtils.isNotEmpty(contentParts)) {
+    //            createInfo = parseAttachments(contentParts, transformerParam);
+    //          } else {
+    //            LOGGER.debug("No file contents attachment found");
+    //          }
+    //        }
+    //
+    //        CreateResponse createResponse;
+    //        if (createInfo == null) {
+    //          CreateRequest createRequest =
+    //              new CreateRequestImpl(
+    //                  getTransform()
+    //                      .transform(
+    //                              mimeType, uuidGenerator::generateUuid, message,
+    // transformerParam, transformerArguments));
+    //          createResponse = catalogFramework.create(createRequest);
+    //        } else {
+    //          CreateStorageRequest streamCreateRequest =
+    //              new CreateStorageRequestImpl(
+    //                  Collections.singletonList(
+    //                      new IncomingContentItem(
+    //                          uuidGenerator,
+    //                          createInfo.getStream(),
+    //                          createInfo.getContentType(),
+    //                          createInfo.getFilename(),
+    //                          createInfo.getMetacard())),
+    //                  null);
+    //          createResponse = catalogFramework.create(streamCreateRequest, transformerArguments);
+    //        }
+    //
+    //        UriBuilder uriBuilder = requestUriInfo.getAbsolutePathBuilder().path("/" +
+    // addToListId);
+    //
+    //        ResponseBuilder responseBuilder = Response.created(uriBuilder.build());
+    //
+    //        List<String> ids =
+    //            createResponse
+    //                .getCreatedMetacards()
+    //                .stream()
+    //                .map(Metacard::getId)
+    //                .collect(Collectors.toList());
+    //
+    //        responseBuilder.header("Added-IDs", ids.stream().collect(Collectors.joining(",")));
+    //
+    //        response = responseBuilder.build();
+    //
+    //        LOGGER.debug("Entry successfully saved, ids: {}", ids);
+    //        if (INGEST_LOGGER.isInfoEnabled()) {
+    //          INGEST_LOGGER.info("Entry successfully saved, ids: {}", ids);
+    //        }
+    //      } else {
+    //        String errorMessage = "No content found, cannot do CREATE.";
+    //        LOGGER.info(errorMessage);
+    //        return createBadRequestResponse(errorMessage);
+    //      }
+    //    } catch (SourceUnavailableException e) {
+    //      String exceptionMessage = "Cannot create catalog entry because source is unavailable: ";
+    //      LOGGER.info(exceptionMessage, e);
+    //      // Catalog framework logs these exceptions to the ingest logger so we don't have to.
+    //      throw new InternalServerErrorException(exceptionMessage);
+    //    } catch (InternalIngestException e) {
+    //      String exceptionMessage = "Error while storing entry in catalog: ";
+    //      LOGGER.info(exceptionMessage, e);
+    //      // Catalog framework logs these exceptions to the ingest logger so we don't have to.
+    //      throw new InternalServerErrorException(exceptionMessage);
+    //    } catch (MetacardCreationException | IngestException e) {
+    //      String errorMessage = "Error while storing entry in catalog: ";
+    //      LOGGER.info(errorMessage, e);
+    //      // Catalog framework logs these exceptions to the ingest logger so we don't have to.
+    //      return createBadRequestResponse(errorMessage);
+    //    } finally {
+    //      IOUtils.closeQuietly(message);
+    //    }
+    //
+    //    return response;
   }
 
   CreateInfo parseAttachments(List<Attachment> contentParts, String transformerParam) {

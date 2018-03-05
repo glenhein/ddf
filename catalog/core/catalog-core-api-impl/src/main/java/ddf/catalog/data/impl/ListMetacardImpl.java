@@ -11,16 +11,30 @@
  * License is distributed along with this program and can be found at
  * <http://www.gnu.org/licenses/lgpl.html>.
  */
-package org.codice.ddf.catalog.ui.query.monitor.api;
+package ddf.catalog.data.impl;
 
-import ddf.catalog.data.impl.QueryMetacardImpl;
+import ddf.catalog.data.Metacard;
+import java.util.Collections;
 
-/** Determine if a query metacard is active. */
-public interface QueryService {
+public class ListMetacardImpl extends MetacardImpl {
+  private static final ListMetacardTypeImpl TYPE = new ListMetacardTypeImpl();
 
-  /**
-   * @param queryMetacard must be non-null
-   * @return true if the query is active
-   */
-  boolean isActiveStandingQuery(QueryMetacardImpl queryMetacard);
+  public ListMetacardImpl() {
+    super(TYPE);
+    setTags(Collections.singleton(ListMetacardTypeImpl.LIST_TAG));
+  }
+
+  public ListMetacardImpl(String title) {
+    this();
+    setTitle(title);
+  }
+
+  public ListMetacardImpl(Metacard wrappedMetacard) {
+    super(wrappedMetacard, TYPE);
+    setTags(Collections.singleton(ListMetacardTypeImpl.LIST_TAG));
+  }
+
+  public static ListMetacardImpl from(Metacard metacard) {
+    return new ListMetacardImpl(metacard);
+  }
 }

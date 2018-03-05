@@ -25,6 +25,7 @@ var UploadBatchModel = require('js/model/UploadBatch');
 var userInstance = require('component/singletons/user-instance');
 var Common = require('js/Common');
 var UploadSummary = require('component/upload-summary/upload-summary.view');
+var store = require('js/store');
 
 function namespacedEvent(event, view) {
     return event + '.' + view.cid;
@@ -37,6 +38,9 @@ function updateDropzoneHeight(view) {
 }
 
 module.exports = Marionette.LayoutView.extend({
+    isList: false,
+    listId: undefined,
+    listType: undefined,
     template: template,
     tagName: CustomElements.register('ingest-details'),
     events: {
@@ -53,7 +57,13 @@ module.exports = Marionette.LayoutView.extend({
     dropzone: undefined,
     uploadBatchModel: undefined,
     dropzoneAnimationRequestDetails: undefined,
-    initialize: function() {},
+    initialize: function(options) {
+        if(options) {
+            this.isList = options.isList === true;
+            this.listId = options.listId;
+            this.listType = options.listType;
+        }
+    },
     onBeforeShow: function() {
         this.setupDropzone();
         this.setupBatchModel();
@@ -61,8 +71,15 @@ module.exports = Marionette.LayoutView.extend({
         this.showSummary();
     },
     setupBatchModel: function() {
+        var lists = store.getCurrentWorkspace().get('lists');
+        var list = undefined;
+        if (lists) {
+            list = lists.get(this.listId);
+        }
+
         this.uploadBatchModel = new UploadBatchModel({}, {
-            dropzone: this.dropzone
+            dropzone: this.dropzone,
+            list: list
         });
         this.setupBatchModelListeners();
     },
@@ -89,12 +106,25 @@ module.exports = Marionette.LayoutView.extend({
         }
     },
     setupDropzone: function() {
-        this.dropzone = new Dropzone(this.el.querySelector('.details-dropzone'), {
-            url: '/services/catalog/',
-            maxFilesize: 5000000, //MB
-            method: 'post',
-            autoProcessQueue: false
-        });
+        if(this.isList) {
+            this.dropzone = new Dropzone(this.el.querySelector('.details-dropzone'), {
+                url: '/services/catalog/list',
+                maxFilesize: 5000000, //MB
+                method: 'post',
+                autoProcessQueue: false,
+                headers: {
+                    'List-ID': this.listId,
+                    'List-Type': this.listType
+                }
+             });
+        } else {
+            this.dropzone = new Dropzone(this.el.querySelector('.details-dropzone'), {
+                url: '/services/catalog/',
+                maxFilesize: 5000000, //MB
+                method: 'post',
+                autoProcessQueue: false
+            });
+        }
     },
     addFiles: function(){
         this.$el.find('.details-dropzone').click();
