@@ -101,6 +101,11 @@ module.exports = Backbone.Model.extend({
                 success: true,
                 message: message
             });
+            var addedIds = file.xhr.getResponseHeader('Added-IDs');
+            if(addedIds) {
+                this.options.list.addBookmarks(addedIds.split(','));
+            }
+
             checkValidation(this);
         }
     },

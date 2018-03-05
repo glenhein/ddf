@@ -238,6 +238,13 @@
             <version>${project.version}</version>
         </dependency>
 
+        <!-- TODO This is being pulled in for the tag name used for metacard lists. I'm assuming that ListMetacardTypeImpl needs to be moved to a better location. -->
+        <dependency>
+            <groupId>ddf.ui</groupId>
+            <artifactId>catalog-ui-search</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
     </dependencies>
 
     <build>

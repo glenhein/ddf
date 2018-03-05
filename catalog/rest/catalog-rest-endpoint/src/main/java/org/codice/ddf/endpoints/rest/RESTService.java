@@ -35,6 +35,9 @@ public interface RESTService {
   String CONTEXT_ROOT = "catalog";
   String SOURCES_PATH = "/sources";
 
+  String LIST_ID_HEADER = "List-ID";
+  String LIST_TYPE_HEADER = "List-Type";
+
   /**
    * REST Get. Retrieves the metadata entry specified by the id. Transformer argument is optional,
    * but is used to specify what format the data should be returned.
@@ -139,6 +142,26 @@ public interface RESTService {
    */
   @POST
   Response addDocument(
+      @Context HttpHeaders headers,
+      @Context UriInfo requestUriInfo,
+      @Context HttpServletRequest httpRequest,
+      MultipartBody multipartBody,
+      @QueryParam("transform") String transformerParam,
+      InputStream message);
+
+  /**
+   * REST Post. Adds new metadata entries to a metacard list. The header parameter {@link
+   * #LIST_ID_HEADER} must be set to the ID of the list metacard. The header parameter {@link
+   * #LIST_TYPE_HEADER} must be set to the type. The standard list types are {@link
+   * ddf.catalog.data.impl.ListMetacardTypeImpl#STANDARD_LIST_TYPES}, but non-standard types are
+   * allowed as well.
+   *
+   * @param message
+   * @return
+   */
+  @POST
+  @Path("/list")
+  Response addDocumentToList(
       @Context HttpHeaders headers,
       @Context UriInfo requestUriInfo,
       @Context HttpServletRequest httpRequest,

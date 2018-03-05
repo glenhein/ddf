@@ -66,11 +66,11 @@
     </bean>
 
     <service interface="ddf.catalog.data.MetacardType">
-        <bean class="org.codice.ddf.catalog.ui.metacard.workspace.QueryMetacardTypeImpl"/>
+        <bean class="ddf.catalog.data.impl.QueryMetacardTypeImpl"/>
     </service>
 
     <service interface="ddf.catalog.data.MetacardType">
-        <bean class="org.codice.ddf.catalog.ui.metacard.workspace.ListMetacardTypeImpl"/>
+        <bean class="ddf.catalog.data.impl.ListMetacardTypeImpl"/>
     </service>
 
     <bean id="workspacePreIngestPlugin"

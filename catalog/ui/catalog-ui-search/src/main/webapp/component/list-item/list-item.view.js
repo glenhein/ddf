@@ -24,6 +24,9 @@ var DropdownView = require('component/dropdown/popout/dropdown.popout.view');
 var ListEditorView = require('component/list-editor/list-editor.view');
 var QueryFeedView = require('component/query-feed/query-feed.view');
 var ListInteractionsView = require('component/list-interactions/list-interactions.view');
+var ListAddItemView = require('component/tabs/lists-add/tabs-list-add.view');
+var lightboxInstance = require('component/lightbox/lightbox.view.instance');
+var IngestDetailsView = require('component/ingest-details/ingest-details.view');
 
 module.exports = Marionette.LayoutView.extend({
   tagName: CustomElements.register('list-item'),
@@ -36,13 +39,15 @@ module.exports = Marionette.LayoutView.extend({
   regions: {
     listEdit: '.list-edit',
     queryFeed: '.details-feed',
-    listActions: '.list-actions'
+    listActions: '.list-actions',
+    listAdd: '.list-add'
   },
   events: {
     'click .list-run': 'triggerRun',
     'click .list-refresh': 'triggerRun',
     'click .list-stop': 'triggerStop',
-    'click .list-delete': 'triggerDelete'
+    'click .list-delete': 'triggerDelete',
+    'click .list-add': 'triggerAdd'
   },
   behaviors: {
     button: {}
@@ -118,6 +123,15 @@ module.exports = Marionette.LayoutView.extend({
   triggerDelete: function(e) {
     this.model.get('query').cancelCurrentSearches();
     this.model.collection.remove(this.model);
+    e.stopPropagation();
+  },
+  triggerAdd: function(e) {
+    lightboxInstance.model.updateTitle('Add List Items');
+    lightboxInstance.model.open();
+    lightboxInstance.lightboxContent.show(new IngestDetailsView({
+        'isList': true,
+        'listId': this.model.attributes.id,
+        'listType': this.model.get('list.icon')}));
     e.stopPropagation();
   },
   serializeData: function() {
