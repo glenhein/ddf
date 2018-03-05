@@ -108,7 +108,7 @@ module.exports = Marionette.LayoutView.extend({
     setupDropzone: function() {
         if(this.isList) {
             this.dropzone = new Dropzone(this.el.querySelector('.details-dropzone'), {
-                url: '/services/catalog/list',
+                url: '/search/catalog/internal/list/import',
                 maxFilesize: 5000000, //MB
                 method: 'post',
                 autoProcessQueue: false,

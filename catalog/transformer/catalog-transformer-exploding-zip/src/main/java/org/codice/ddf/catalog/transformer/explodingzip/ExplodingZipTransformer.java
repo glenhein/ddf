@@ -156,12 +156,15 @@ public class ExplodingZipTransformer extends AbstractListMultiInputTransformer {
       Optional<Metacard> optionalMetacard = transformResponse.getParentMetacard();
       if (optionalMetacard.isPresent()) {
 
+        ByteSource byteSource = ByteSource.wrap(fileBackedOutputStream.asByteSource().read());
         Metacard parentMetacard = optionalMetacard.get();
         ContentItem contentItem =
             new ContentItemImpl(
                 parentMetacard.getId(),
                 ByteSource.wrap(fileBackedOutputStream.asByteSource().read()),
                 mimeType.toString(),
+                zipEntry.getName(),
+                byteSource.size(),
                 parentMetacard);
         contentItems.add(contentItem);
       }
