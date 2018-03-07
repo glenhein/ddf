@@ -63,7 +63,7 @@ public class ListApplication implements SparkApplication {
   private static final String DEFAULT_FILE_NAME = "file";
 
   private static final List<String> REFINEABLE_MIME_TYPES =
-          Arrays.asList(DEFAULT_MIME_TYPE, "text/plain");
+      Arrays.asList(DEFAULT_MIME_TYPE, "text/plain");
 
   private final MimeTypeMapper mimeTypeMapper;
 
@@ -113,7 +113,6 @@ public class ListApplication implements SparkApplication {
           return "";
         });
   }
-
 
   private CreateInfo parseAttachments(List<Part> contentParts) {
 
@@ -184,8 +183,7 @@ public class ListApplication implements SparkApplication {
     return createInfo;
   }
 
-  private void store(
-      String listType, CreateInfo createInfo, Request request, Response response) {
+  private void store(String listType, CreateInfo createInfo, Request request, Response response) {
 
     Map<String, ? extends Serializable> transformerArguments =
         new ImmutableMap.Builder<String, String>()
