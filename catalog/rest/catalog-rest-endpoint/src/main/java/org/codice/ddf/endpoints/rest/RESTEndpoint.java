@@ -16,7 +16,6 @@ package org.codice.ddf.endpoints.rest;
 import static ddf.catalog.data.AttributeType.AttributeFormat.BINARY;
 import static ddf.catalog.data.AttributeType.AttributeFormat.OBJECT;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteSource;
 import ddf.catalog.CatalogFramework;
 import ddf.catalog.Constants;
@@ -82,8 +81,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
 import javax.activation.MimeType;
 import javax.activation.MimeTypeParseException;
 import javax.servlet.http.HttpServletRequest;
@@ -117,7 +114,6 @@ import org.apache.commons.io.input.BoundedInputStream;
 import org.apache.commons.lang.StringUtils;
 import org.apache.cxf.jaxrs.ext.multipart.Attachment;
 import org.apache.cxf.jaxrs.ext.multipart.MultipartBody;
-import org.codice.ddf.catalog.transform.ListMultiInputTransformer;
 import org.codice.ddf.catalog.transform.Transform;
 import org.codice.ddf.catalog.transform.TransformResponse;
 import org.codice.ddf.platform.util.uuidgenerator.UuidGenerator;
@@ -173,7 +169,7 @@ public class RESTEndpoint implements RESTService {
    * file extension of the filename specified in the create request.
    */
   private static final List<String> REFINEABLE_MIME_TYPES =
-      Arrays.asList(DEFAULT_MIME_TYPE, "text/plain");
+          Arrays.asList(DEFAULT_MIME_TYPE, "text/plain");
 
   private static MimeType jsonMimeType = null;
 
@@ -230,9 +226,9 @@ public class RESTEndpoint implements RESTService {
   @HEAD
   @Path("/{id}")
   public Response getHeaders(
-      @PathParam("id") String id,
-      @Context UriInfo uriInfo,
-      @Context HttpServletRequest httpRequest) {
+          @PathParam("id") String id,
+          @Context UriInfo uriInfo,
+          @Context HttpServletRequest httpRequest) {
 
     return getHeaders(null, id, uriInfo, httpRequest);
   }
@@ -250,10 +246,10 @@ public class RESTEndpoint implements RESTService {
   @HEAD
   @Path("/sources/{sourceid}/{id}")
   public Response getHeaders(
-      @PathParam("sourceid") String sourceid,
-      @PathParam("id") String id,
-      @Context UriInfo uriInfo,
-      @Context HttpServletRequest httpRequest) {
+          @PathParam("sourceid") String sourceid,
+          @PathParam("id") String id,
+          @Context UriInfo uriInfo,
+          @Context HttpServletRequest httpRequest) {
 
     Response response;
     Response.ResponseBuilder responseBuilder;
@@ -300,9 +296,9 @@ public class RESTEndpoint implements RESTService {
 
         if (card == null) {
           return Response.status(Status.NOT_FOUND)
-              .entity("<pre>Unable to retrieve requested metacard.</pre>")
-              .type(MediaType.TEXT_HTML)
-              .build();
+                  .entity("<pre>Unable to retrieve requested metacard.</pre>")
+                  .type(MediaType.TEXT_HTML)
+                  .build();
         }
 
         LOGGER.debug("Calling transform.");
@@ -329,7 +325,7 @@ public class RESTEndpoint implements RESTService {
         if (StringUtils.isNotBlank(filename)) {
           LOGGER.debug("filename: {}", filename);
           responseBuilder.header(
-              HEADER_CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"");
+                  HEADER_CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"");
         }
 
         long size = content.getSize();
@@ -383,10 +379,10 @@ public class RESTEndpoint implements RESTService {
   @GET
   @Path("/{id}")
   public Response getDocument(
-      @PathParam("id") String id,
-      @QueryParam("transform") String transformerParam,
-      @Context UriInfo uriInfo,
-      @Context HttpServletRequest httpRequest) {
+          @PathParam("id") String id,
+          @QueryParam("transform") String transformerParam,
+          @Context UriInfo uriInfo,
+          @Context HttpServletRequest httpRequest) {
 
     return getDocument(null, id, transformerParam, uriInfo, httpRequest);
   }
@@ -409,7 +405,7 @@ public class RESTEndpoint implements RESTService {
     SourceInfoResponse sources;
     try {
       SourceInfoRequestEnterprise sourceInfoRequestEnterprise =
-          new SourceInfoRequestEnterprise(true);
+              new SourceInfoRequestEnterprise(true);
 
       sources = catalogFramework.getSourceInfo(sourceInfoRequestEnterprise);
       for (SourceDescriptor source : sources.getSourceInfo()) {
@@ -424,7 +420,7 @@ public class RESTEndpoint implements RESTService {
               JSONObject contentTypeObj = new JSONObject();
               contentTypeObj.put("name", contentType.getName());
               contentTypeObj.put(
-                  "version", contentType.getVersion() != null ? contentType.getVersion() : "");
+                      "version", contentType.getVersion() != null ? contentType.getVersion() : "");
               contentTypesObj.add(contentTypeObj);
             }
           }
@@ -439,8 +435,8 @@ public class RESTEndpoint implements RESTService {
 
     sourcesString = JSONValue.toJSONString(resultsList);
     content =
-        new BinaryContentImpl(
-            new ByteArrayInputStream(sourcesString.getBytes(StandardCharsets.UTF_8)), jsonMimeType);
+            new BinaryContentImpl(
+                    new ByteArrayInputStream(sourcesString.getBytes(StandardCharsets.UTF_8)), jsonMimeType);
     responseBuilder = Response.ok(content.getInputStream(), content.getMimeTypeValue());
 
     // Add the Accept-ranges header to let the client know that we accept ranges in bytes
@@ -463,11 +459,11 @@ public class RESTEndpoint implements RESTService {
   @GET
   @Path("/sources/{sourceid}/{id}")
   public Response getDocument(
-      @Encoded @PathParam("sourceid") String encodedSourceId,
-      @Encoded @PathParam("id") String encodedId,
-      @QueryParam("transform") String transformerParam,
-      @Context UriInfo uriInfo,
-      @Context HttpServletRequest httpRequest) {
+          @Encoded @PathParam("sourceid") String encodedSourceId,
+          @Encoded @PathParam("id") String encodedId,
+          @QueryParam("transform") String transformerParam,
+          @Context UriInfo uriInfo,
+          @Context HttpServletRequest httpRequest) {
 
     Response response = null;
     Response.ResponseBuilder responseBuilder;
@@ -520,9 +516,9 @@ public class RESTEndpoint implements RESTService {
 
         if (card == null) {
           return Response.status(Status.NOT_FOUND)
-              .entity("<pre>Unable to retrieve requested metacard.</pre>")
-              .type(MediaType.TEXT_HTML)
-              .build();
+                  .entity("<pre>Unable to retrieve requested metacard.</pre>")
+                  .type(MediaType.TEXT_HTML)
+                  .build();
         }
 
         // Check for Range header set the value in the map appropriately so that the
@@ -559,7 +555,7 @@ public class RESTEndpoint implements RESTService {
         if (StringUtils.isNotBlank(filename)) {
           LOGGER.debug("filename: {}", filename);
           responseBuilder.header(
-              HEADER_CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"");
+                  HEADER_CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"");
         }
 
         long size = content.getSize();
@@ -588,9 +584,9 @@ public class RESTEndpoint implements RESTService {
         String errorMessage = "Unable to process request. Data usage limit exceeded: ";
         LOGGER.debug(errorMessage, e);
         return Response.status(Status.REQUEST_ENTITY_TOO_LARGE)
-            .entity("<pre>" + errorMessage + "</pre>")
-            .type(MediaType.TEXT_HTML)
-            .build();
+                .entity("<pre>" + errorMessage + "</pre>")
+                .type(MediaType.TEXT_HTML)
+                .build();
         // The catalog framework will throw this if any of the transformers blow up.
         // We need to catch this exception here or else execution will return to CXF and
         // we'll lose this message and end up with a huge stack trace in a GUI or whatever
@@ -609,9 +605,9 @@ public class RESTEndpoint implements RESTService {
   @POST
   @Path("/metacard")
   public Response createMetacard(
-      MultipartBody multipartBody,
-      @Context UriInfo requestUriInfo,
-      @QueryParam("transform") String transformerParam) {
+          MultipartBody multipartBody,
+          @Context UriInfo requestUriInfo,
+          @QueryParam("transform") String transformerParam) {
 
     LOGGER.trace("ENTERING: createMetacard");
 
@@ -662,14 +658,14 @@ public class RESTEndpoint implements RESTService {
 
     try {
       TransformResponse transformResponse =
-          getTransform()
-              .transform(
-                  mimeType,
-                  "assigned-when-ingested",
-                  () -> "assigned-when-ingested",
-                  stream,
-                  null,
-                  Collections.emptyMap());
+              getTransform()
+                      .transform(
+                              mimeType,
+                              "assigned-when-ingested",
+                              () -> "assigned-when-ingested",
+                              stream,
+                              null,
+                              Collections.emptyMap());
 
       if (!transformResponse.getParentMetacard().isPresent()) {
         return createBadRequestResponse("Unable to create metacard");
@@ -679,15 +675,15 @@ public class RESTEndpoint implements RESTService {
       String metacardId = metacard.getId();
       LOGGER.debug("Metacard {} created", metacardId);
       LOGGER.debug(
-          "Transforming metacard {} to {} to be able to return it to client",
-          metacardId,
-          transformer);
+              "Transforming metacard {} to {} to be able to return it to client",
+              metacardId,
+              transformer);
       final BinaryContent content = catalogFramework.transform(metacard, transformer, null);
       LOGGER.debug(
-          "Metacard to {} transform complete for {}, preparing response.", transformer, metacardId);
+              "Metacard to {} transform complete for {}, preparing response.", transformer, metacardId);
 
       Response.ResponseBuilder responseBuilder =
-          Response.ok(content.getInputStream(), content.getMimeTypeValue());
+              Response.ok(content.getInputStream(), content.getMimeTypeValue());
       response = responseBuilder.build();
     } catch (MetacardCreationException | CatalogTransformerException e) {
       return createBadRequestResponse("Unable to create metacard");
@@ -709,11 +705,11 @@ public class RESTEndpoint implements RESTService {
   @Path("/{id}")
   @Consumes({"text/*", "application/*"})
   public Response updateDocument(
-      @PathParam("id") String id,
-      @Context HttpHeaders headers,
-      @Context HttpServletRequest httpRequest,
-      @QueryParam("transform") String transformerParam,
-      InputStream message) {
+          @PathParam("id") String id,
+          @Context HttpHeaders headers,
+          @Context HttpServletRequest httpRequest,
+          @QueryParam("transform") String transformerParam,
+          InputStream message) {
     return updateDocument(id, headers, httpRequest, null, transformerParam, message);
   }
 
@@ -728,12 +724,12 @@ public class RESTEndpoint implements RESTService {
   @Path("/{id}")
   @Consumes("multipart/*")
   public Response updateDocument(
-      @PathParam("id") String id,
-      @Context HttpHeaders headers,
-      @Context HttpServletRequest httpRequest,
-      MultipartBody multipartBody,
-      @QueryParam("transform") String transformerParam,
-      InputStream message) {
+          @PathParam("id") String id,
+          @Context HttpHeaders headers,
+          @Context HttpServletRequest httpRequest,
+          MultipartBody multipartBody,
+          @QueryParam("transform") String transformerParam,
+          InputStream message) {
     LOGGER.trace("PUT");
     Response response;
 
@@ -754,29 +750,26 @@ public class RESTEndpoint implements RESTService {
 
         if (createInfo == null) {
           TransformResponse transformResponse =
-              getTransform()
-                  .transform(mimeType, id, null, message, transformerParam, Collections.emptyMap());
+                  getTransform()
+                          .transform(mimeType, id, null, message, transformerParam, Collections.emptyMap());
           if (!transformResponse.getParentMetacard().isPresent()) {
             throw new MetacardCreationException("Unable to transform message into a metacard.");
           }
-
           UpdateRequest updateRequest =
-              new UpdateRequestImpl(id, transformResponse.getParentMetacard().get());
-
+                  new UpdateRequestImpl(id, transformResponse.getParentMetacard().get());
           catalogFramework.update(updateRequest);
-
         } else {
           UpdateStorageRequest streamUpdateRequest =
-              new UpdateStorageRequestImpl(
-                  Collections.singletonList(
-                      new IncomingContentItem(
-                          id,
-                          createInfo.getStream(),
-                          createInfo.getContentType(),
-                          createInfo.getFilename(),
-                          0,
-                          createInfo.getMetacard())),
-                  null);
+                  new UpdateStorageRequestImpl(
+                          Collections.singletonList(
+                                  new IncomingContentItem(
+                                          id,
+                                          createInfo.getStream(),
+                                          createInfo.getContentType(),
+                                          createInfo.getFilename(),
+                                          0,
+                                          createInfo.getMetacard())),
+                          null);
           catalogFramework.update(streamUpdateRequest);
         }
 
@@ -806,11 +799,11 @@ public class RESTEndpoint implements RESTService {
   @POST
   @Consumes({"text/*", "application/*"})
   public Response addDocument(
-      @Context HttpHeaders headers,
-      @Context UriInfo requestUriInfo,
-      @Context HttpServletRequest httpRequest,
-      @QueryParam("transform") String transformerParam,
-      InputStream message) {
+          @Context HttpHeaders headers,
+          @Context UriInfo requestUriInfo,
+          @Context HttpServletRequest httpRequest,
+          @QueryParam("transform") String transformerParam,
+          InputStream message) {
     return addDocument(headers, requestUriInfo, httpRequest, null, transformerParam, message);
   }
 
@@ -823,114 +816,12 @@ public class RESTEndpoint implements RESTService {
   @POST
   @Consumes("multipart/*")
   public Response addDocument(
-      @Context HttpHeaders headers,
-      @Context UriInfo requestUriInfo,
-      @Context HttpServletRequest httpRequest,
-      MultipartBody multipartBody,
-      @QueryParam("transform") String transformerParam,
-      InputStream message) {
-    return addDocument(
-        headers,
-        requestUriInfo,
-        httpRequest,
-        multipartBody,
-        transformerParam,
-        message,
-        Collections.emptyMap(),
-        metacard -> {});
-
-    //    LOGGER.debug("POST");
-    //    Response response;
-    //
-    //    MimeType mimeType = getMimeType(headers);
-    //
-    //    try {
-    //      if (message != null) {
-    //        CreateInfo createInfo = null;
-    //        if (multipartBody != null) {
-    //          List<Attachment> contentParts = multipartBody.getAllAttachments();
-    //          if (CollectionUtils.isNotEmpty(contentParts)) {
-    //            createInfo = parseAttachments(contentParts, transformerParam);
-    //          } else {
-    //            LOGGER.debug("No file contents attachment found");
-    //          }
-    //        }
-    //
-    //        CreateResponse createResponse;
-    //        if (createInfo == null) {
-    //          CreateRequest createRequest =
-    //              new CreateRequestImpl(
-    //                  getTransform()
-    //                      .transform(
-    //                          mimeType, null, message, transformerParam, Collections.emptyMap()));
-    //          createResponse = catalogFramework.create(createRequest);
-    //        } else {
-    //          CreateStorageRequest streamCreateRequest =
-    //              new CreateStorageRequestImpl(
-    //                  Collections.singletonList(
-    //                      new IncomingContentItem(
-    //                          uuidGenerator,
-    //                          createInfo.getStream(),
-    //                          createInfo.getContentType(),
-    //                          createInfo.getFilename(),
-    //                          createInfo.getMetacard())),
-    //                  null);
-    //          createResponse = catalogFramework.create(streamCreateRequest);
-    //        }
-    //
-    //        String id = createResponse.getCreatedMetacards().get(0).getId();
-    //
-    //        LOGGER.debug("Create Response id [{}]", id);
-    //
-    //        UriBuilder uriBuilder = requestUriInfo.getAbsolutePathBuilder().path("/" + id);
-    //
-    //        ResponseBuilder responseBuilder = Response.created(uriBuilder.build());
-    //
-    //        responseBuilder.header(Metacard.ID, id);
-    //
-    //        response = responseBuilder.build();
-    //
-    //        LOGGER.debug("Entry successfully saved, id: {}", id);
-    //        if (INGEST_LOGGER.isInfoEnabled()) {
-    //          INGEST_LOGGER.info("Entry successfully saved, id: {}", id);
-    //        }
-    //      } else {
-    //        String errorMessage = "No content found, cannot do CREATE.";
-    //        LOGGER.info(errorMessage);
-    //        return createBadRequestResponse(errorMessage);
-    //      }
-    //    } catch (SourceUnavailableException e) {
-    //      String exceptionMessage = "Cannot create catalog entry because source is unavailable: ";
-    //      LOGGER.info(exceptionMessage, e);
-    //      // Catalog framework logs these exceptions to the ingest logger so we don't have to.
-    //      throw new InternalServerErrorException(exceptionMessage);
-    //    } catch (InternalIngestException e) {
-    //      String exceptionMessage = "Error while storing entry in catalog: ";
-    //      LOGGER.info(exceptionMessage, e);
-    //      // Catalog framework logs these exceptions to the ingest logger so we don't have to.
-    //      throw new InternalServerErrorException(exceptionMessage);
-    //    } catch (MetacardCreationException | IngestException e) {
-    //      String errorMessage = "Error while storing entry in catalog: ";
-    //      LOGGER.info(errorMessage, e);
-    //      // Catalog framework logs these exceptions to the ingest logger so we don't have to.
-    //      return createBadRequestResponse(errorMessage);
-    //    } finally {
-    //      IOUtils.closeQuietly(message);
-    //    }
-    //
-    //    return response;
-  }
-
-  private Response addDocument(
-      @Context HttpHeaders headers,
-      @Context UriInfo requestUriInfo,
-      @Context HttpServletRequest httpRequest,
-      MultipartBody multipartBody,
-      @QueryParam("transform") String transformerParam,
-      InputStream message,
-      Map<String, ? extends Serializable> transformerArguments,
-      Consumer<Metacard> metacardConsumer) {
-
+          @Context HttpHeaders headers,
+          @Context UriInfo requestUriInfo,
+          @Context HttpServletRequest httpRequest,
+          MultipartBody multipartBody,
+          @QueryParam("transform") String transformerParam,
+          InputStream message) {
     LOGGER.debug("POST");
     Response response;
 
@@ -954,45 +845,45 @@ public class RESTEndpoint implements RESTService {
         if (createInfo == null) {
 
           TransformResponse transformResponse =
-              getTransform()
-                  .transform(
-                      mimeType, null, null, message, transformerParam, Collections.emptyMap());
+                  getTransform()
+                          .transform(
+                                  mimeType, null, null, message, transformerParam, Collections.emptyMap());
 
           List<Metacard> metacardsToCreate =
-              new LinkedList<>(transformResponse.getDerivedMetacards());
+                  new LinkedList<>(transformResponse.getDerivedMetacards());
           transformResponse.getParentMetacard().ifPresent(metacardsToCreate::add);
 
           if (transformResponse.getParentMetacard().isPresent()) {
             CreateRequest createRequest =
-                new CreateRequestImpl(transformResponse.getParentMetacard().get());
+                    new CreateRequestImpl(transformResponse.getParentMetacard().get());
             createResponse = catalogFramework.create(createRequest);
             id = createResponse.getCreatedMetacards().get(0).getId();
           }
 
           if (CollectionUtils.isNotEmpty(transformResponse.getDerivedMetacards())) {
             CreateRequest createRequest =
-                new CreateRequestImpl(transformResponse.getDerivedMetacards());
+                    new CreateRequestImpl(transformResponse.getDerivedMetacards());
             catalogFramework.create(createRequest);
           }
 
           if (CollectionUtils.isNotEmpty(transformResponse.getDerivedContentItems())) {
             CreateStorageRequest streamCreateRequest =
-                new CreateStorageRequestImpl(transformResponse.getDerivedContentItems(), null);
+                    new CreateStorageRequestImpl(transformResponse.getDerivedContentItems(), null);
             catalogFramework.create(streamCreateRequest);
           }
 
         } else {
           CreateStorageRequest streamCreateRequest =
-              new CreateStorageRequestImpl(
-                  Collections.singletonList(
-                      new IncomingContentItem(
-                          uuidGenerator,
-                          createInfo.getStream(),
-                          createInfo.getContentType(),
-                          createInfo.getFilename(),
-                          createInfo.getMetacard())),
-                  null);
-          createResponse = catalogFramework.create(streamCreateRequest, transformerArguments);
+                  new CreateStorageRequestImpl(
+                          Collections.singletonList(
+                                  new IncomingContentItem(
+                                          uuidGenerator,
+                                          createInfo.getStream(),
+                                          createInfo.getContentType(),
+                                          createInfo.getFilename(),
+                                          createInfo.getMetacard())),
+                          null);
+          createResponse = catalogFramework.create(streamCreateRequest);
           // TODO phil: the convention I've been following is that the response header contains the
           // ID of the parent metacard, but at this point, I don't know which metacard is the
           // parent.
@@ -1040,136 +931,6 @@ public class RESTEndpoint implements RESTService {
     return response;
   }
 
-  @POST
-  @Consumes("multipart/*")
-  @Path("/list")
-  public Response addDocumentToList(
-      @Context HttpHeaders headers,
-      @Context UriInfo requestUriInfo,
-      @Context HttpServletRequest httpRequest,
-      MultipartBody multipartBody,
-      @QueryParam("transform") String transformerParam,
-      InputStream message) {
-    LOGGER.debug("POST");
-
-    String listType = headers.getRequestHeaders().getFirst(RESTService.LIST_TYPE_HEADER);
-
-    if (StringUtils.isBlank(listType)) {
-      String exceptionMessage =
-          String.format("The header %s must be set.", RESTService.LIST_TYPE_HEADER);
-      LOGGER.info(exceptionMessage);
-      return createBadRequestResponse(exceptionMessage);
-    }
-
-    Map<String, ? extends Serializable> transformerArguments =
-        new ImmutableMap.Builder<String, String>()
-            .put(ListMultiInputTransformer.LIST_TYPE, listType)
-            .build();
-
-    List<Metacard> metacards = new LinkedList<>();
-
-    Response response =
-        addDocument(
-            headers,
-            requestUriInfo,
-            httpRequest,
-            multipartBody,
-            transformerParam,
-            message,
-            transformerArguments,
-            metacards::add);
-
-    ResponseBuilder responseBuilder = Response.fromResponse(response);
-
-    responseBuilder.header(
-        "Added-IDs", metacards.stream().map(Metacard::getId).collect(Collectors.joining(",")));
-
-    return responseBuilder.build();
-
-    //    MimeType mimeType = getMimeType(headers);
-    //
-    //    try {
-    //      if (message != null) {
-    //        CreateInfo createInfo = null;
-    //        if (multipartBody != null) {
-    //          List<Attachment> contentParts = multipartBody.getAllAttachments();
-    //          if (CollectionUtils.isNotEmpty(contentParts)) {
-    //            createInfo = parseAttachments(contentParts, transformerParam);
-    //          } else {
-    //            LOGGER.debug("No file contents attachment found");
-    //          }
-    //        }
-    //
-    //        CreateResponse createResponse;
-    //        if (createInfo == null) {
-    //          CreateRequest createRequest =
-    //              new CreateRequestImpl(
-    //                  getTransform()
-    //                      .transform(
-    //                              mimeType, uuidGenerator::generateUuid, message,
-    // transformerParam, transformerArguments));
-    //          createResponse = catalogFramework.create(createRequest);
-    //        } else {
-    //          CreateStorageRequest streamCreateRequest =
-    //              new CreateStorageRequestImpl(
-    //                  Collections.singletonList(
-    //                      new IncomingContentItem(
-    //                          uuidGenerator,
-    //                          createInfo.getStream(),
-    //                          createInfo.getContentType(),
-    //                          createInfo.getFilename(),
-    //                          createInfo.getMetacard())),
-    //                  null);
-    //          createResponse = catalogFramework.create(streamCreateRequest, transformerArguments);
-    //        }
-    //
-    //        UriBuilder uriBuilder = requestUriInfo.getAbsolutePathBuilder().path("/" +
-    // addToListId);
-    //
-    //        ResponseBuilder responseBuilder = Response.created(uriBuilder.build());
-    //
-    //        List<String> ids =
-    //            createResponse
-    //                .getCreatedMetacards()
-    //                .stream()
-    //                .map(Metacard::getId)
-    //                .collect(Collectors.toList());
-    //
-    //        responseBuilder.header("Added-IDs", ids.stream().collect(Collectors.joining(",")));
-    //
-    //        response = responseBuilder.build();
-    //
-    //        LOGGER.debug("Entry successfully saved, ids: {}", ids);
-    //        if (INGEST_LOGGER.isInfoEnabled()) {
-    //          INGEST_LOGGER.info("Entry successfully saved, ids: {}", ids);
-    //        }
-    //      } else {
-    //        String errorMessage = "No content found, cannot do CREATE.";
-    //        LOGGER.info(errorMessage);
-    //        return createBadRequestResponse(errorMessage);
-    //      }
-    //    } catch (SourceUnavailableException e) {
-    //      String exceptionMessage = "Cannot create catalog entry because source is unavailable: ";
-    //      LOGGER.info(exceptionMessage, e);
-    //      // Catalog framework logs these exceptions to the ingest logger so we don't have to.
-    //      throw new InternalServerErrorException(exceptionMessage);
-    //    } catch (InternalIngestException e) {
-    //      String exceptionMessage = "Error while storing entry in catalog: ";
-    //      LOGGER.info(exceptionMessage, e);
-    //      // Catalog framework logs these exceptions to the ingest logger so we don't have to.
-    //      throw new InternalServerErrorException(exceptionMessage);
-    //    } catch (MetacardCreationException | IngestException e) {
-    //      String errorMessage = "Error while storing entry in catalog: ";
-    //      LOGGER.info(errorMessage, e);
-    //      // Catalog framework logs these exceptions to the ingest logger so we don't have to.
-    //      return createBadRequestResponse(errorMessage);
-    //    } finally {
-    //      IOUtils.closeQuietly(message);
-    //    }
-    //
-    //    return response;
-  }
-
   CreateInfo parseAttachments(List<Attachment> contentParts, String transformerParam) {
 
     if (contentParts.size() == 1) {
@@ -1194,9 +955,9 @@ public class RESTEndpoint implements RESTService {
         }
       } catch (IOException e) {
         LOGGER.debug(
-            "Unable to get input stream for mime attachment. Ignoring override attribute: {}",
-            name,
-            e);
+                "Unable to get input stream for mime attachment. Ignoring override attribute: {}",
+                name,
+                e);
       }
     }
     if (createInfo == null) {
@@ -1214,26 +975,26 @@ public class RESTEndpoint implements RESTService {
   }
 
   private void parseOverrideAttributes(
-      List<Attribute> attributes, String parsedName, InputStream inputStream) {
+          List<Attribute> attributes, String parsedName, InputStream inputStream) {
     metacardTypes
-        .stream()
-        .map(metacardType -> metacardType.getAttributeDescriptor(parsedName))
-        .filter(Objects::nonNull)
-        .findFirst()
-        .map(AttributeDescriptor::getType)
-        .map(AttributeType::getAttributeFormat)
-        .ifPresent(
-            attributeFormat ->
-                parseAttribute(attributes, parsedName, inputStream, attributeFormat));
+            .stream()
+            .map(metacardType -> metacardType.getAttributeDescriptor(parsedName))
+            .filter(Objects::nonNull)
+            .findFirst()
+            .map(AttributeDescriptor::getType)
+            .map(AttributeType::getAttributeFormat)
+            .ifPresent(
+                    attributeFormat ->
+                            parseAttribute(attributes, parsedName, inputStream, attributeFormat));
   }
 
   private void parseAttribute(
-      List<Attribute> attributes,
-      String parsedName,
-      InputStream inputStream,
-      AttributeType.AttributeFormat attributeFormat) {
+          List<Attribute> attributes,
+          String parsedName,
+          InputStream inputStream,
+          AttributeType.AttributeFormat attributeFormat) {
     try (InputStream is = inputStream;
-        InputStream boundedStream = new BoundedInputStream(is, MAX_INPUT_SIZE + 1)) {
+         InputStream boundedStream = new BoundedInputStream(is, MAX_INPUT_SIZE + 1)) {
       if (attributeFormat == OBJECT) {
         LOGGER.debug("Object type not supported for override");
         return;
@@ -1294,7 +1055,7 @@ public class RESTEndpoint implements RESTService {
   }
 
   private Metacard parseMetadata(
-      String transformerParam, Metacard metacard, Attachment attachment, InputStream inputStream) {
+          String transformerParam, Metacard metacard, Attachment attachment, InputStream inputStream) {
     String transformer = DEFAULT_METACARD_TRANSFORMER;
     if (transformerParam != null) {
       transformer = transformerParam;
@@ -1302,14 +1063,14 @@ public class RESTEndpoint implements RESTService {
     try {
       MimeType mimeType = new MimeType(attachment.getContentType().toString());
       TransformResponse transformResponse =
-          getTransform()
-              .transform(
-                  mimeType,
-                  "assigned-when-ingested",
-                  () -> "assigned-when-ingested",
-                  inputStream,
-                  transformer,
-                  Collections.emptyMap());
+              getTransform()
+                      .transform(
+                              mimeType,
+                              "assigned-when-ingested",
+                              () -> "assigned-when-ingested",
+                              inputStream,
+                              transformer,
+                              Collections.emptyMap());
 
       if (transformResponse.getParentMetacard().isPresent()) {
         return transformResponse.getParentMetacard().get();
@@ -1350,9 +1111,9 @@ public class RESTEndpoint implements RESTService {
 
     if (contentPart.getContentDisposition() != null) {
       filename =
-          contentPart
-              .getContentDisposition()
-              .getParameter(FILENAME_CONTENT_DISPOSITION_PARAMETER_NAME);
+              contentPart
+                      .getContentDisposition()
+                      .getParameter(FILENAME_CONTENT_DISPOSITION_PARAMETER_NAME);
     }
 
     // Only interested in attachments for file uploads. Any others should be covered by
@@ -1381,14 +1142,14 @@ public class RESTEndpoint implements RESTService {
       if (StringUtils.isEmpty(contentType) || REFINEABLE_MIME_TYPES.contains(contentType)) {
         String fileExtension = FilenameUtils.getExtension(filename);
         LOGGER.debug(
-            "fileExtension = {}, contentType before refinement = {}", fileExtension, contentType);
+                "fileExtension = {}, contentType before refinement = {}", fileExtension, contentType);
         try {
           contentType = mimeTypeMapper.getMimeTypeForFileExtension(fileExtension);
         } catch (MimeTypeResolutionException e) {
           LOGGER.debug(
-              "Unable to refine contentType {} based on filename extension {}",
-              contentType,
-              fileExtension);
+                  "Unable to refine contentType {} based on filename extension {}",
+                  contentType,
+                  fileExtension);
         }
         LOGGER.debug("Refined contentType = {}", contentType);
       }
@@ -1409,13 +1170,13 @@ public class RESTEndpoint implements RESTService {
   @DELETE
   @Path("/{id}")
   public Response deleteDocument(
-      @PathParam("id") String id, @Context HttpServletRequest httpRequest) {
+          @PathParam("id") String id, @Context HttpServletRequest httpRequest) {
     LOGGER.debug("DELETE");
     Response response;
     try {
       if (id != null) {
         DeleteRequestImpl deleteReq =
-            new DeleteRequestImpl(new HtmlPolicyBuilder().toFactory().sanitize(id));
+                new DeleteRequestImpl(new HtmlPolicyBuilder().toFactory().sanitize(id));
 
         catalogFramework.delete(deleteReq);
         response = Response.ok(id).build();
@@ -1427,7 +1188,7 @@ public class RESTEndpoint implements RESTService {
       }
     } catch (SourceUnavailableException ce) {
       String exceptionMessage =
-          "Could not delete entry from catalog since the source is unavailable: ";
+              "Could not delete entry from catalog since the source is unavailable: ";
       LOGGER.info(exceptionMessage, ce);
       throw new InternalServerErrorException(exceptionMessage);
     } catch (InternalIngestException e) {
@@ -1444,9 +1205,9 @@ public class RESTEndpoint implements RESTService {
 
   private Response createBadRequestResponse(String entityMessage) {
     return Response.status(Status.BAD_REQUEST)
-        .entity("<pre>" + entityMessage + "</pre>")
-        .type(MediaType.TEXT_HTML)
-        .build();
+            .entity("<pre>" + entityMessage + "</pre>")
+            .type(MediaType.TEXT_HTML)
+            .build();
   }
 
   private Map<String, Serializable> convert(MultivaluedMap<String, String> map) {
@@ -1621,31 +1382,31 @@ public class RESTEndpoint implements RESTService {
     private InputStream inputStream;
 
     public IncomingContentItem(
-        UuidGenerator uuidGenerator,
-        ByteSource byteSource,
-        String mimeTypeRawData,
-        String filename,
-        Metacard metacard) {
+            UuidGenerator uuidGenerator,
+            ByteSource byteSource,
+            String mimeTypeRawData,
+            String filename,
+            Metacard metacard) {
       super(uuidGenerator.generateUuid(), byteSource, mimeTypeRawData, filename, 0L, metacard);
     }
 
     public IncomingContentItem(
-        UuidGenerator uuidGenerator,
-        InputStream inputStream,
-        String mimeTypeRawData,
-        String filename,
-        Metacard metacard) {
+            UuidGenerator uuidGenerator,
+            InputStream inputStream,
+            String mimeTypeRawData,
+            String filename,
+            Metacard metacard) {
       super(uuidGenerator.generateUuid(), null, mimeTypeRawData, filename, 0L, metacard);
       this.inputStream = inputStream;
     }
 
     public IncomingContentItem(
-        String id,
-        InputStream inputStream,
-        String mimeTypeRawData,
-        String filename,
-        long size,
-        Metacard metacard) {
+            String id,
+            InputStream inputStream,
+            String mimeTypeRawData,
+            String filename,
+            long size,
+            Metacard metacard) {
       super(id, null, mimeTypeRawData, filename, size, metacard);
       this.inputStream = inputStream;
     }
