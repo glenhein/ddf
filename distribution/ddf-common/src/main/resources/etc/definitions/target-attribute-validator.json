@@ -1,0 +1,24 @@
+{
+  "validators": {
+    "target.type":
+    [
+      {
+        "validator": "enumerationignorecase",
+        "arguments": [
+          "Point",
+          "BE Number"
+        ]
+      }
+    ],
+    "security.classification":
+    [
+      {
+        "validator": "enumerationignorecase",
+        "arguments": [
+          "Unclassified",
+          "Classified"
+        ]
+      }
+    ]
+  }
+}

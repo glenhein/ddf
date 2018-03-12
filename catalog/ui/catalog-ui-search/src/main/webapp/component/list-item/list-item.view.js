@@ -26,6 +26,7 @@ var QueryFeedView = require('component/query-feed/query-feed.view');
 var ListInteractionsView = require('component/list-interactions/list-interactions.view');
 var lightboxInstance = require('component/lightbox/lightbox.view.instance');
 var IngestDetailsView = require('component/ingest-details/ingest-details.view');
+var ListAddTabsView = require('component/tabs/list-add/tabs-list-add.view');
 
 module.exports = Marionette.LayoutView.extend({
   tagName: CustomElements.register('list-item'),
@@ -127,10 +128,10 @@ module.exports = Marionette.LayoutView.extend({
   triggerAdd: function(e) {
     lightboxInstance.model.updateTitle('Add List Items');
     lightboxInstance.model.open();
-    lightboxInstance.lightboxContent.show(new IngestDetailsView({
-        'isList': true,
+    lightboxInstance.lightboxContent.show(new ListAddTabsView({
         'listId': this.model.attributes.id,
-        'listType': this.model.get('list.icon')}));
+        'listType': this.model.get('list.icon')
+    }));
     e.stopPropagation();
   },
   serializeData: function() {

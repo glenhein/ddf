@@ -113,5 +113,6 @@
         <module>catalog-transformer-exploding-zip</module>
         <module>catalog-transformer-propertyjson-metacard</module>
         <module>catalog-transformer-preview</module>
+        <module>catalog-transformer-propertyjson</module>
     </modules>
 </project>

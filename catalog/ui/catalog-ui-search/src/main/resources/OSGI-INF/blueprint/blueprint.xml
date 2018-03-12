@@ -65,6 +65,14 @@
         <property name="historianConfigurations" ref="historianConfigurations"/>
     </bean>
 
+    <!-- TODO ONLY FOR TESTING. DO NOT MERGE! -->
+    <service interface="ddf.catalog.data.MetacardType">
+        <bean class="ddf.catalog.data.impl.TargetMetacardTypeImpl"/>
+        <service-properties>
+            <entry key="id" value="metacard.target"/>
+        </service-properties>
+    </service>
+
     <service interface="ddf.catalog.data.MetacardType">
         <bean class="ddf.catalog.data.impl.QueryMetacardTypeImpl"/>
     </service>
@@ -220,6 +228,10 @@
 
     <reference id="attributeRegistry" interface="ddf.catalog.data.AttributeRegistry" />
 
+    <bean id="buildApplication" class="org.codice.ddf.catalog.ui.metacard.BuildApplication">
+        <argument ref="endpointUtil"/>
+    </bean>
+
     <bean id="metacardApplication" class="org.codice.ddf.catalog.ui.metacard.MetacardApplication">
         <argument ref="catalogFramework"/>
         <argument ref="filterBuilder"/>
@@ -286,6 +298,7 @@
                 <ref component-id="configurationApplication"/>
                 <ref component-id="feedbackApplication"/>
                 <ref component-id="listApplication"/>
+                <ref component-id="buildApplication"/>
             </list>
         </property>
         <property name="requestSupplier" ref="rootReqSupplier"/>
@@ -361,7 +374,7 @@
                 persistent-id="org.codice.ddf.catalog.ui.query.monitor.impl.WorkspaceQueryService"
                 update-strategy="container-managed"/>
         <property name="queryTimeoutMinutes" value="5"/>
-        <property name="cronString" value="0 0 0 * * ?"/>
+        <property name="cronString" value="0 1 0 * * ?"/>
         <property name="queryTimeInterval" value="1440"/>
         <argument>
             <bean class="org.codice.ddf.catalog.ui.query.monitor.impl.QueryUpdateSubscriberList">

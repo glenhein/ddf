@@ -254,6 +254,13 @@ public class MetacardApplication implements SparkApplication {
           return util.metacardsToJson(metacards);
         });
 
+    post(
+        "/metacards/create",
+        APPLICATION_JSON,
+        (req, res) -> {
+          return null;
+        });
+
     delete(
         "/metacards",
         APPLICATION_JSON,
