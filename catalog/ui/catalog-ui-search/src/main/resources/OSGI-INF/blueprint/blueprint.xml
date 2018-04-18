@@ -269,6 +269,16 @@
         <property name="endpointUtil" ref="endpointUtil"/>
     </bean>
 
+    <reference id="mimeTypeMapper" interface="ddf.mime.MimeTypeMapper"/>
+
+    <reference id="uuidGenerator" interface="org.codice.ddf.platform.util.uuidgenerator.UuidGenerator" filter="(id=uuidGenerator)"/>
+
+    <bean id="listApplication" class="org.codice.ddf.catalog.ui.metacard.ListApplication">
+        <argument ref="mimeTypeMapper"/>
+        <argument ref="catalogFramework"/>
+        <argument ref="uuidGenerator"/>
+    </bean>
+
     <bean id="jsonRpc" class="org.codice.ddf.catalog.ui.ws.JsonRpc">
         <argument>
             <map>
@@ -345,6 +355,7 @@
                 <ref component-id="configurationApplication"/>
                 <ref component-id="feedbackApplication"/>
                 <ref component-id="searchFormsApplication"/>
+                <ref component-id="listApplication"/>
             </list>
         </property>
         <property name="requestSupplier" ref="rootReqSupplier"/>

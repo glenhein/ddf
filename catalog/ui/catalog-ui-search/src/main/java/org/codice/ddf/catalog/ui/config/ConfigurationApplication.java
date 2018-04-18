@@ -141,6 +141,8 @@ public class ConfigurationApplication implements SparkApplication {
 
   private String queryFeedbackEmailDestination;
 
+  private String listImportEndpoint;
+
   private int maximumUploadSize = 1_048_576;
 
   private List<String> readOnly =
@@ -209,6 +211,14 @@ public class ConfigurationApplication implements SparkApplication {
   private String customBackgroundSlideout;
 
   public ConfigurationApplication() {}
+
+  public String getListImportEndpoint() {
+    return listImportEndpoint;
+  }
+
+  public void setListImportEndpoint(String listImportEndpoint) {
+    this.listImportEndpoint = listImportEndpoint;
+  }
 
   public List<Long> getScheduleFrequencyList() {
     return scheduleFrequencyList;
@@ -409,6 +419,7 @@ public class ConfigurationApplication implements SparkApplication {
     config.put("customBackgroundModal", customBackgroundModal);
     config.put("customBackgroundSlideout", customBackgroundSlideout);
     config.put("disableUnknownErrorBox", disableUnknownErrorBox);
+    config.put("listImportEndpoint", listImportEndpoint);
     return config;
   }
 

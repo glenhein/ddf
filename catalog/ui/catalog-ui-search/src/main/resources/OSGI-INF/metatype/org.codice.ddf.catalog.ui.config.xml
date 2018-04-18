@@ -409,6 +409,14 @@
             type="Boolean"
             default="false"
             required="false"/>
+
+        <AD id="listImportEndpoint"
+            name="List Import Endpoint"
+            description="URL of the List Import Endpoint"
+            type="String"
+            default="/search/catalog/internal/list/import"
+            required="true"/>
+
     </OCD>
 
     <Designate pid="org.codice.ddf.catalog.ui.config">
