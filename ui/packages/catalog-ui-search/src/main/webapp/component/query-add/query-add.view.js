@@ -129,6 +129,7 @@ module.exports = Marionette.LayoutView.extend({
     )
   },
   showCustom: function() {
+    this.autoLoadDefaultIfSet()
     this.queryContent.show(
       new QueryAdvanced({
         model: this.model,
@@ -138,7 +139,6 @@ module.exports = Marionette.LayoutView.extend({
     )
   },
   focus: function() {
-    this.autoLoadDefaultIfSet()
     this.queryContent.currentView.focus()
   },
   autoLoadDefaultIfSet: function() {
@@ -171,8 +171,6 @@ module.exports = Marionette.LayoutView.extend({
             userDefaultTemplate['querySettings']['detail-level']) ||
           'allFields',
       })
-
-      this.showCustom()
     }
   },
   edit: function() {
