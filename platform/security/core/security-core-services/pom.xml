@@ -138,6 +138,11 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
+            <groupId>ddf.platform</groupId>
+            <artifactId>platform-paxweb-jettyconfig</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.pac4j</groupId>
             <artifactId>pac4j-oidc</artifactId>
             <version>${pac4j.version}</version>

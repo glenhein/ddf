@@ -54,6 +54,8 @@ public class ClientInfoFilter implements HttpFilter {
 
   public static final String SERVLET_REMOTE_HOST = "remoteHost";
 
+  public static final String SERVLET_REMOTE_PORT = "remotePort";
+
   public static final String SERVLET_SCHEME = "scheme";
 
   public static final String SERVLET_CONTEXT_PATH = "contextPath";
@@ -75,6 +77,7 @@ public class ClientInfoFilter implements HttpFilter {
     clientInfoMap.put(SERVLET_REMOTE_ADDR, request.getRemoteAddr());
     clientInfoMap.put(SERVLET_REMOTE_HOST, request.getRemoteHost());
     clientInfoMap.put(SERVLET_SCHEME, request.getScheme());
+    clientInfoMap.put(SERVLET_REMOTE_PORT, Integer.toString(request.getRemotePort()));
     ServletContext servletContext = request.getServletContext();
     if (servletContext != null) {
       clientInfoMap.put(SERVLET_CONTEXT_PATH, servletContext.getContextPath());

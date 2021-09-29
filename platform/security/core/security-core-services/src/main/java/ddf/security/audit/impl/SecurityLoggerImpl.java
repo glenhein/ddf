@@ -18,6 +18,7 @@ import ddf.security.SubjectOperations;
 import java.security.AccessController;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.collections.CollectionUtils;
@@ -33,6 +34,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.util.Supplier;
 import org.apache.shiro.subject.Subject;
 import org.apache.shiro.util.ThreadContext;
+import org.codice.ddf.pax.web.jetty.ClientInfoFilter;
 import org.codice.ddf.security.util.ThreadContextUtils;
 
 /** Class that contains utility methods for logging common security messages. */
@@ -85,6 +87,7 @@ public final class SecurityLoggerImpl implements ddf.security.audit.SecurityLogg
     requestIpAndPortAndUserMessage(null, message, messageBuilder);
   }
 
+  @SuppressWarnings("rawtypes")
   private void requestIpAndPortAndUserMessage(
       Subject subject, Message message, StringBuilder messageBuilder) {
 
@@ -100,7 +103,17 @@ public final class SecurityLoggerImpl implements ddf.security.audit.SecurityLogg
     appendConditionalAttributes(subject, messageBuilder);
 
     if (message == null) {
-      messageBuilder.append(" ");
+      Object clientInfoRaw = ThreadContext.get(ClientInfoFilter.CLIENT_INFO_KEY);
+      if (clientInfoRaw instanceof Map) {
+        messageBuilder
+            .append(" Request IP: ")
+            .append(((Map) clientInfoRaw).get("remoteAddr"))
+            .append(", Port: ")
+            .append(((Map) clientInfoRaw).get("remotePort"))
+            .append(" ");
+      } else {
+        messageBuilder.append(" ");
+      }
     } else {
       HttpServletRequest servletRequest =
           (HttpServletRequest) message.get(AbstractHTTPDestination.HTTP_REQUEST);
