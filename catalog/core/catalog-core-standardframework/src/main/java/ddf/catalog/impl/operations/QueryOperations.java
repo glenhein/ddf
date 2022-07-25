@@ -186,14 +186,21 @@ public class QueryOperations extends DescribableImpl {
     queryRequest = setFlagsOnRequest(queryRequest);
 
     try {
+      LOGGER.info("Before first validateQueryRequest: {}", queryRequest);
       queryRequest = validateQueryRequest(queryRequest);
+      LOGGER.info("Before getFanoutQuery: {}", queryRequest);
       queryRequest = getFanoutQuery(queryRequest, fanoutEnabled);
+      LOGGER.info("Before preProcessPreAuthorizationPlugins: {}", queryRequest);
       queryRequest = preProcessPreAuthorizationPlugins(queryRequest);
+      LOGGER.info("Before populateQueryRequestPolicyMap: {}", queryRequest);
       queryRequest = populateQueryRequestPolicyMap(queryRequest);
+      LOGGER.info("Before processPreQueryAccessPlugins: {}", queryRequest);
       queryRequest = processPreQueryAccessPlugins(queryRequest);
+      LOGGER.info("Before processPreQueryPlugins: {}", queryRequest);
       queryRequest = processPreQueryPlugins(queryRequest);
+      LOGGER.info("Before second validateQueryRequest: {}", queryRequest);
       queryRequest = validateQueryRequest(queryRequest);
-
+      LOGGER.info("Before doQuery: {}", queryRequest);
       if (fedStrategy == null) {
         if (frameworkProperties.getFederationStrategy() == null) {
           throw new FederationException(
@@ -212,11 +219,17 @@ public class QueryOperations extends DescribableImpl {
       // may differ from the number of filtered results after processing plugins have been run.
       queryResponse.getProperties().put("actualResultSize", queryResponse.getResults().size());
       LOGGER.trace("BeforePostQueryFilter result size: {}", queryResponse.getResults().size());
+      LOGGER.info("Before injectAttributes: {}", queryRequest);
       queryResponse = injectAttributes(queryResponse);
+      LOGGER.info("Before validateFixQueryResponse: {}", queryRequest);
       queryResponse = validateFixQueryResponse(queryResponse, overrideFanoutRename, fanoutEnabled);
+      LOGGER.info("Before postProcessPreAuthorizationPlugins: {}", queryRequest);
       queryResponse = postProcessPreAuthorizationPlugins(queryResponse);
+      LOGGER.info("Before populateQueryResponsePolicyMap: {}", queryRequest);
       queryResponse = populateQueryResponsePolicyMap(queryResponse);
+      LOGGER.info("Before processPostQueryAccessPlugins: {}", queryRequest);
       queryResponse = processPostQueryAccessPlugins(queryResponse);
+      LOGGER.info("Before processPostQueryPlugins: {}", queryRequest);
       queryResponse = processPostQueryPlugins(queryResponse);
 
       log(queryResponse);
@@ -426,7 +439,9 @@ public class QueryOperations extends DescribableImpl {
       throws FederationException {
     for (PostQueryPlugin service : frameworkProperties.getPostQuery()) {
       try {
+        LOGGER.info("Before PostQueryPlugin: {} {}", queryResponse.getRequest(), service);
         queryResponse = service.process(queryResponse);
+        LOGGER.info("After PostQueryPlugin: {} {}", queryResponse.getRequest(), service);
       } catch (PluginExecutionException see) {
         LOGGER.debug("Error executing PostQueryPlugin: {}", see.getMessage(), see);
       } catch (StopProcessingException e) {
@@ -440,7 +455,9 @@ public class QueryOperations extends DescribableImpl {
       throws FederationException {
     for (AccessPlugin plugin : frameworkProperties.getAccessPlugins()) {
       try {
+        LOGGER.info("Before AccessPlugin (#2): {} {}", queryResponse.getRequest(), plugin);
         queryResponse = plugin.processPostQuery(queryResponse);
+        LOGGER.info("Access AccessPlugin (#2): {} {}", queryResponse.getRequest(), plugin);
       } catch (StopProcessingException e) {
         throw new FederationException("Query could not be executed.", e);
       }
@@ -457,10 +474,12 @@ public class QueryOperations extends DescribableImpl {
       HashMap<String, Set<String>> itemPolicyMap = new HashMap<>();
       for (PolicyPlugin plugin : frameworkProperties.getPolicyPlugins()) {
         try {
+          LOGGER.info("Before PolicyPlugin (#2): {} {}", queryResponse.getRequest(), plugin);
           PolicyResponse policyResponse = plugin.processPostQuery(result, unmodifiableProperties);
           opsSecuritySupport.buildPolicyMap(itemPolicyMap, policyResponse.itemPolicy().entrySet());
           opsSecuritySupport.buildPolicyMap(
               responsePolicyMap, policyResponse.operationPolicy().entrySet());
+          LOGGER.info("After PolicyPlugin (#2): {} {}", queryResponse.getRequest(), plugin);
         } catch (StopProcessingException e) {
           throw new FederationException("Query could not be executed.", e);
         }
@@ -475,7 +494,9 @@ public class QueryOperations extends DescribableImpl {
   private QueryRequest processPreQueryPlugins(QueryRequest queryReq) throws FederationException {
     for (PreQueryPlugin service : frameworkProperties.getPreQuery()) {
       try {
+        LOGGER.info("Before PreQueryPlugin: {} {}", queryReq, service);
         queryReq = service.process(queryReq);
+        LOGGER.info("After PreQueryPlugin: {} {}", queryReq, service);
       } catch (PluginExecutionException see) {
         LOGGER.debug("Error executing PreQueryPlugin: {}", see.getMessage(), see);
       } catch (StopProcessingException e) {
@@ -489,7 +510,9 @@ public class QueryOperations extends DescribableImpl {
       throws FederationException {
     for (AccessPlugin plugin : frameworkProperties.getAccessPlugins()) {
       try {
+        LOGGER.info("Before AccessPlugin (#1): {} {}", queryReq, plugin);
         queryReq = plugin.processPreQuery(queryReq);
+        LOGGER.info("After AccessPlugin (#1): {} {}", queryReq, plugin);
       } catch (StopProcessingException e) {
         throw new FederationException("Query could not be executed.", e);
       }
@@ -501,7 +524,9 @@ public class QueryOperations extends DescribableImpl {
       throws FederationException {
     for (PreAuthorizationPlugin plugin : frameworkProperties.getPreAuthorizationPlugins()) {
       try {
+        LOGGER.info("Before PreAuthorizationPlugin: {} {}", queryRequest, plugin);
         queryRequest = plugin.processPreQuery(queryRequest);
+        LOGGER.info("After PreAuthorizationPlugin: {} {}", queryRequest, plugin);
       } catch (StopProcessingException e) {
         throw new FederationException("Query could not be executed.", e);
       }
@@ -513,7 +538,9 @@ public class QueryOperations extends DescribableImpl {
       throws FederationException {
     for (PreAuthorizationPlugin plugin : frameworkProperties.getPreAuthorizationPlugins()) {
       try {
+        LOGGER.info("Before PreAuthorizationPlugin: {} {}", queryResponse.getRequest(), plugin);
         queryResponse = plugin.processPostQuery(queryResponse);
+        LOGGER.info("After PreAuthorizationPlugin: {} {}", queryResponse.getRequest(), plugin);
       } catch (StopProcessingException e) {
         throw new FederationException("Query could not be executed.", e);
       }
@@ -528,10 +555,12 @@ public class QueryOperations extends DescribableImpl {
         Collections.unmodifiableMap(queryReq.getProperties());
     for (PolicyPlugin plugin : frameworkProperties.getPolicyPlugins()) {
       try {
+        LOGGER.info("Before PolicyPlugin (#1): {} {}", queryReq, plugin);
         PolicyResponse policyResponse =
             plugin.processPreQuery(queryReq.getQuery(), unmodifiableProperties);
         opsSecuritySupport.buildPolicyMap(
             requestPolicyMap, policyResponse.operationPolicy().entrySet());
+        LOGGER.info("After PolicyPlugin (#1): {} {}", queryReq, plugin);
       } catch (StopProcessingException e) {
         throw new FederationException("Query could not be executed.", e);
       }
