@@ -186,7 +186,7 @@ public class QueryOperations extends DescribableImpl {
     queryRequest = setFlagsOnRequest(queryRequest);
 
     try {
-      LOGGER.info("Before first validateQueryRequest: {}", queryRequest);
+      securityLogger.audit("Before first validateQueryRequest: {}", queryRequest);
       queryRequest = validateQueryRequest(queryRequest);
       LOGGER.info("Before getFanoutQuery: {}", queryRequest);
       queryRequest = getFanoutQuery(queryRequest, fanoutEnabled);

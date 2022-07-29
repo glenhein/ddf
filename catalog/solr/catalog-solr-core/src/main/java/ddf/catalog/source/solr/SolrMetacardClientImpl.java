@@ -186,7 +186,9 @@ public class SolrMetacardClientImpl implements SolrMetacardClient {
 
     SolrFilterDelegate solrFilterDelegate =
         filterDelegateFactory.newInstance(resolver, request.getProperties());
+    LOGGER.info("Generate solr query: {}", request);
     SolrQuery query = getSolrQuery(request, solrFilterDelegate);
+    LOGGER.info("Done generating solr query: {}", request);
 
     boolean isFacetedQuery = handleFacetRequest(query, request);
     query = handleSuggestionQuery(query, request);
@@ -199,6 +201,7 @@ public class SolrMetacardClientImpl implements SolrMetacardClient {
               || BooleanUtils.toBoolean(
                   filterAdapter.adapt(request.getQuery(), new RealTimeGetDelegate()));
 
+      LOGGER.info("Begin actual solr query: {}", request);
       if (doRealTimeGet) {
         LOGGER.debug("Performing real time query");
         SolrQuery realTimeQuery = getRealTimeQuery(query, solrFilterDelegate.getIds());
@@ -210,6 +213,7 @@ public class SolrMetacardClientImpl implements SolrMetacardClient {
         highlighter.processPreQuery(request, query);
         solrResponse = client.query(query, METHOD.POST);
       }
+      LOGGER.info("End actual solr query: {}", request);
 
       if (isFacetedQuery) {
         handleFacetResponse(solrResponse, responseProps);
@@ -363,6 +367,7 @@ public class SolrMetacardClientImpl implements SolrMetacardClient {
       boolean userSpellcheckIsOn)
       throws IOException, SolrServerException {
 
+    LOGGER.info("Begin solr spellcheck: {}", request);
     QueryResponse highlightResponse = solrResponse;
     SolrDocumentList resultDocs = originalDocs;
     if (userSpellcheckIsOn && solrSpellcheckHasResults(solrResponse)) {
@@ -388,7 +393,10 @@ public class SolrMetacardClientImpl implements SolrMetacardClient {
         responseProps.put(SHOWING_RESULTS_FOR_KEY, new ArrayList<>(corrections));
       }
     }
+    LOGGER.info("End solr spellcheck: {}", request);
+    LOGGER.info("Starting highlight extraction: {}", request);
     highlighter.processPostQuery(highlightResponse, responseProps);
+    LOGGER.info("Ending highlight extraction: {}", request);
     return resultDocs;
   }
 
