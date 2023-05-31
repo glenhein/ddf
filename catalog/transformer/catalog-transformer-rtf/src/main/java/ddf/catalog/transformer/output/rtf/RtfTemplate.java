@@ -82,9 +82,16 @@ public class RtfTemplate {
   }
 
   public Rtf rtf(Rtf doc) {
-    doc.section(p(), p(), p(font(1, bold(this.metacard.getTitle()))).alignCentered());
+    doc =
+        doc.section(
+            p(font(1, bold(this.metacard.getTitle()))).alignCentered(), p(), p(bold("Test Title")));
 
-    this.categories.forEach(exportCategory -> appendSection(doc, exportCategory, this.metacard));
+    // this.categories.forEach(exportCategory -> appendSection(doc, exportCategory, this.metacard));
+
+    // doc.p();
+    // doc.p(bold("Test Title"));
+
+    // doc.section(rows);
 
     return doc;
   }
@@ -96,8 +103,6 @@ public class RtfTemplate {
       metacardId -> data -> fromBytes(metacardId, data);
 
   private void appendSection(Rtf rtf, RtfCategory category, Metacard metacard) {
-    rtf.p();
-    rtf.p(bold(category.getTitle()));
 
     Function<Map.Entry, RtfRow> appendPropertyFunction = memoizeForRowData.apply(metacard.getId());
 
@@ -105,6 +110,13 @@ public class RtfTemplate {
         category.toExportMap(metacard).entrySet().stream()
             .map(appendPropertyFunction)
             .collect(Collectors.toList());
+
+    if (rows.isEmpty()) {
+      return;
+    }
+
+    rtf.p();
+    rtf.p(bold(category.getTitle()));
 
     rtf.section(rows);
   }

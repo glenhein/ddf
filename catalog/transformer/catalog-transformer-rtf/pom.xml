@@ -43,9 +43,9 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.zensols.jrtf</groupId>
-            <artifactId>tutego.jrtf</artifactId>
-            <version>${jrtf.version}</version>
+            <groupId>com.tutego</groupId>
+            <artifactId>jrtf</artifactId>
+            <version>0.9-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>ddf.catalog.core</groupId>
@@ -135,7 +135,7 @@
                     <instructions>
                         <Embed-Dependency>
                             commons-lang3,
-                            tutego.jrtf
+                            jrtf
                         </Embed-Dependency>
                         <Private-Package>
                             ddf.catalog.transformer.output.rtf,
