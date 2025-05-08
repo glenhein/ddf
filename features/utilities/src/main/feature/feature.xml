@@ -187,11 +187,20 @@
     <feature name="tika" version="${project.version}"
              description="Provides Tika as a bundle.">
         <feature prerequisite="true">wrap</feature>
-        <feature>jackson</feature>
+        <feature version="${project.version}">jackson</feature>
         <bundle>mvn:com.github.luben/zstd-jni/${zstd-jni.version}</bundle>
         <bundle>wrap:mvn:net.sf.jwordnet/jwnl/${jwnl.version}</bundle>
         <bundle>mvn:org.apache.tika/tika-core/${tika.version}</bundle>
-        <bundle>mvn:org.apache.tika/tika-bundle-standard/${tika.version}</bundle>
+        <bundle>mvn:org.apache.tika/tika-parsers-standard-package/${tika.version}</bundle>
+<!--        <bundle>mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.saxon/12.5_1</bundle>-->
+        <bundle>wrap:mvn:org.apache.tika/tika-bundle-standard/${tika.version}$overwrite=merge&amp;Import-Package=!org.junit,!org.junit.*,!junit.*,org.apache.tika.*,org.slf4j,org.slf4j.event,org.slf4j.helpers,*;resolution:=optional</bundle>
+<!--        <bundle>mvn:com.github.javaparser/javaparser-core/3.26.2</bundle>-->
+<!--        <bundle>wrap:mvn:com.github.javaparser/javaparser-symbol-solver-core/3.26.2</bundle>-->
+<!--        <bundle>wrap:mvn:net.sf.saxon/Saxon-HE/12.6</bundle>-->
+<!--        <bundle>wrap:mvn:org.apache.pdfbox/pdfbox-debugger/2.0.34</bundle>-->
+<!--        <bundle>mvn:org.bouncycastle/bcutil-jdk18on/1.80</bundle>-->
+<!--        <bundle>mvn:org.bouncycastle/bcprov-jdk18on/1.80</bundle>-->
+<!--        <bundle>mvn:org.bouncycastle/bcpkix-jdk18on/1.80</bundle>-->
     </feature>
 
     <feature name="io" version="${project.version}" description="I/O Utilities">
@@ -208,8 +217,8 @@
 
     <feature name="poi" version="${project.version}">
         <feature dependency="true">apache-commons</feature>
-        <bundle>mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.xmlresolver/1.2_5</bundle>
-        <bundle>mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.saxon/9.9.1-6_1</bundle>
+        <bundle>mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.xmlresolver/5.2.1_1</bundle>
+        <bundle>mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.saxon/12.5_1</bundle>
         <bundle>mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.xmlbeans/${xmlbeans.version}_1</bundle>
         <bundle>mvn:commons-io/commons-io/${commons-io.version}</bundle>
         <bundle>mvn:org.apache.commons/commons-math3/${commons-math3.version}</bundle>

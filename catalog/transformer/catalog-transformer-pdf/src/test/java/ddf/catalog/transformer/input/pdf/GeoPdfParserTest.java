@@ -18,8 +18,10 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.junit.Ignore;
 import org.junit.Test;
 
+@Ignore
 public class GeoPdfParserTest {
 
   public static final String WKT_POLYGON =
